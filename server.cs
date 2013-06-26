@@ -8,3 +8,4 @@ if ($GameModeArg !$= $ZAMB::Path @ "gamemode.txt") {
 
 exec( "./lib/ts-pathing.cs" );
 exec( "./src/sounds.cs" );
+exec( "./src/zombie.cs" );
