@@ -39,7 +39,7 @@ function playerSurvivorArmor::onTrigger(%this, %obj, %slot, %state) {
 	parent::onTrigger(%this, %obj, %slot, %state);
 	%obj.trigger[%slot] = %state;
 
-	if (%slot != 4 || !%val || $Sim::Time - %obj.lastShove < 0.5) {
+	if (%slot != 4 || !%state || $Sim::Time - %obj.lastShove < 0.5) {
 		return;
 	}
 
@@ -81,7 +81,7 @@ function playerSurvivorArmor::onTrigger(%this, %obj, %slot, %state) {
 
 		%ray = containerRayCast(%start,
 			vectorAdd(%start, vectorScale(%eye, 4)),
-			$TypeMasks::FxBrickObjectType
+			$TypeMasks::FxBrickObjectType | $TypeMasks::TerrainObjectType
 		);
 
 		if (%ray !$= "0") {
@@ -93,7 +93,7 @@ function playerSurvivorArmor::onTrigger(%this, %obj, %slot, %state) {
 	}
 
 	if (isObject(%profile)) {
-		serverPlay3D(%profile, %this.getHackPosition());
+		serverPlay3D(%profile, %obj.getHackPosition());
 	}
 }
 
@@ -108,4 +108,48 @@ function playerSurvivorArmor::onDisabled(%this, %obj) {
 	}
 
 	parent::onDisabled(%this, %obj);
+}
+
+package zambSurvivorPackage {
+	function player::activateStuff(%this) {
+		%miniGame = getMiniGameFromObject(%this);
+
+		if (%miniGame !$= $defaultMiniGame) {
+			parent::activateStuff(%this);
+			return;
+		}
+
+		if ($Sim::Time - %this.lastUseTime < 0.1) {
+			return;
+		}
+
+		%this.lastUseTime = $Sim::Time;
+
+		%start = %this.getEyePoint();
+		%vector = %this.getEyeVector();
+
+		%distance = 5;
+
+		%ray = containerRayCast(%start,
+			vectorAdd(%start, vectorScale(%vector, %distance)),
+			$TypeMasks::All, %this
+		);
+
+		%col = firstWord(%ray);
+		%use = isObject(%col);
+
+		if (%use) {
+			%use = %this.useObject(%col);
+		}
+
+		if (!%use && isObject(%this.client)) {
+			%this.client.play2D(zamb_cannot_use);
+		}
+	}
+};
+
+activatePackage("zambSurvivorPackage");
+
+function player::useObject(%this, %obj) {
+	return false;
 }

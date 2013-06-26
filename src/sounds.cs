@@ -172,6 +172,85 @@ function Player::playJumpLanding(%this) {
 	}
 }
 
+function playAmbientSoundSingular(%profile, %volume) {
+	%emitter = new audioEmitter() {
+		profile = %profile;
+		volume = %volume;
+
+		is3D = false;
+		isLooping = false;
+
+		type = 0;
+		useProfileDescription = false;
+	};
+
+	// %time = alxGetWaveLen( %profile.fileName );
+	%time = 30000;
+
+	missionCleanup.add(%emitter);
+	%emitter.scheduleNoQuota(%time, "delete");
+
+	return %emitter;
+}
+
+function playAmbientSoundLooping(%profile, %volume) {
+	%name = "loopingAmbient_" @ %profile;
+
+	if (isObject(%name)) {
+		%name.delete();
+	}
+
+	%emitter = new audioEmitter() {
+		profile = %profile;
+		volume = %volume;
+
+		is3D = false;
+		isLooping = true;
+
+		type = 0;
+		useProfileDescription = false;
+	};
+
+	%emitter.setName(%name);
+	missionCleanup.add(%emitter);
+
+	return %emitter;
+}
+
+function lightningStrikeController() {
+	cancel($lightingStrikeController);
+	%thunderStrikeCount = 9;
+
+	%thunderStrike0 = zamb_ambience_thunderstorm_lightning1;
+	%thunderStrike1 = zamb_ambience_thunderstorm_lightning2;
+	%thunderStrike2 = zamb_ambience_thunderstorm_lightning3;
+	%thunderStrike3 = zamb_ambience_thunderstorm_lightning4;
+	%thunderStrike4 = zamb_ambience_thunderstorm_thunder1;
+	%thunderStrike5 = zamb_ambience_thunderstorm_thunder2;
+	%thunderStrike6 = zamb_ambience_thunderstorm_thunder3;
+	%thunderStrike7 = zamb_ambience_thunderstorm_thunderFar1;
+	%thunderStrike8 = zamb_ambience_thunderstorm_thunderFar1;
+
+	%profile = %thunderStrike[getRandom(0, %thunderStrikeCount - 1)];
+	%volume = 0.75 + getRandom() * 0.25;
+	// %time = alxGetWaveLen( %profile.fileName ) + getRandom( 1000, 6500 );
+	// %time = getRandom( 7500, 9000 ) + getRandom( 500, 2500 );
+	%time = getRandom(5000, 7500) + getRandom(500, 2500);
+	// %time = getRandom( 1000, 3500 );
+
+	if (isObject(Sky)) {
+		Sky.stormClouds(1, 0.75 + getRandom() * 0.5);
+	}
+
+	playAmbientSoundSingular(%profile, %volume);
+	$lightingStrikeController = schedule(%time, 0, "lightningStrikeController");
+}
+
+function startAmbience() {
+	playAmbientSoundLooping(zamb_ambience_rumble_rain, 0.65);
+	lightningStrikeController();
+}
+
 zambRegisterSound(zamb_cannot_use, "cannot_use");
 zambRegisterSound(zamb_damage1, "damage1");
 zambRegisterSound(zamb_damage2, "damage2");
@@ -193,4 +272,19 @@ zambRegisterSound(zamb_survivor_swing_miss, "survivor/swing_miss");
 zambRegisterSound(zamb_survivor_swing_survivor, "survivor/swing_survivor");
 zambRegisterSound(zamb_survivor_swing_world, "survivor/swing_world");
 
+zambRegisterSound(zamb_ambience_rumble_rain, "ambience/rumble_rain");
+
+zambRegisterSound(zamb_ambience_thunderstorm_lightning1, "ambience/lightning1");
+zambRegisterSound(zamb_ambience_thunderstorm_lightning2, "ambience/lightning2");
+zambRegisterSound(zamb_ambience_thunderstorm_lightning3, "ambience/lightning3");
+zambRegisterSound(zamb_ambience_thunderstorm_lightning4, "ambience/lightning4");
+
+zambRegisterSound(zamb_ambience_thunderstorm_thunder1, "ambience/thunder1");
+zambRegisterSound(zamb_ambience_thunderstorm_thunder2, "ambience/thunder2");
+zambRegisterSound(zamb_ambience_thunderstorm_thunder3, "ambience/thunder3");
+
+zambRegisterSound(zamb_ambience_thunderstorm_thunderFar1, "ambience/thunder_far1");
+zambRegisterSound(zamb_ambience_thunderstorm_thunderFar2, "ambience/thunder_far2");
+
 zambLoadFootsteps();
+schedule(0, 0, "startAmbience");

@@ -37,7 +37,7 @@ function baseZombieData::onAdd(%this, %obj) {
 		%obj.setMoveSpeed(%this.moveSpeedMin + getRandom() * (%this.moveSpeedMax - %this.moveSpeedMin));
 	}
 
-	%obj.setMoveTolerance(1.78);
+	%obj.setMoveTolerance(3);
 	%obj.setMoveSlowdown(0);
 }
 
@@ -107,6 +107,11 @@ function baseZombieData::zombieTick(%this, %obj, %delta) {
 	}
 	else if (%obj.target !$= "") {
 		%obj.target = "";
+	}
+
+	if (%obj.target !$= "") {
+		%obj.setAimObject(%obj.target);
+		%obj.setMoveObject(%obj.target);
 	}
 }
 
