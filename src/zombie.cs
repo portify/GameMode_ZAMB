@@ -105,7 +105,7 @@ function baseZombieData::isValidTarget(%this, %obj, %target) {
 function baseZombieData::getTargetScore(%this, %obj, %target) {
 	%sum = 0;
 
-	%sum += mClampF(1 - (vectorDist(%obj.position, %target.position) / 150), 0, 1)
+	%sum += mClampF(1 - (vectorDist(%obj.position, %target.position) / 150), 0, 1);
 	%sum += %target.getDamageLevel() / %target.getDataBlock().maxDamage;
 
 	return %sum / 2;
