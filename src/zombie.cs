@@ -1,10 +1,25 @@
 datablock playerData(baseZombieData : playerStandardArmor) {
 	uiName = "";
+
+	mass = 150;
+	maxDamage = 30;
+	jumpForce = 1332;
+
+	minLookAngle = -1.6;
+	maxLookAngle = 1.6;
+
+	maxForwardSpeed = 10;
+	maxSideSpeed = 10;
+	maxBackwardSpeed = 8;
+
+	maxForwardCrouchSpeed = 6;
+	maxSideCrouchSpeed = 6;
+	maxBackwardCrouchSpeed = 4;
+
+	minImpactSpeed = 24;
+	speedDamageScale = 3.9;
+
 	canJet = false;
-
-	firstPersonOnly = true;
-	thirdPersonOnly = false;
-
 	isZombie = true;
 
 	enableRandomMoveSpeed = true;
@@ -16,6 +31,7 @@ datablock playerData(baseZombieData : playerStandardArmor) {
 
 function baseZombieData::onAdd(%this, %obj) {
 	parent::onAdd(%this, %obj);
+	%obj.footstepUpdateTick();
 
 	if (%this.enableRandomMoveSpeed && %obj.getClassName() $= "AIPlayer") {
 		%obj.setMoveSpeed(%this.moveSpeedMin + getRandom() * (%this.moveSpeedMax - %this.moveSpeedMin));
