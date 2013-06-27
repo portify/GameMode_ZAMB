@@ -27,6 +27,15 @@ package zambPackage {
 
 		return 1;
 	}
+
+	function player::removeBody(%this) {
+		if (%this.getDataBlock().isZombie) {
+			%this.delete();
+		}
+		else {
+			parent::removeBody(%this);
+		}
+	}
 };
 
 activatePackage("zambPackage");
