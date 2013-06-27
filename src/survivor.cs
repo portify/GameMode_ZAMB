@@ -39,7 +39,7 @@ function playerSurvivorArmor::onTrigger(%this, %obj, %slot, %state) {
 	parent::onTrigger(%this, %obj, %slot, %state);
 	%obj.trigger[%slot] = %state;
 
-	if (%slot != 4 || !%state || $Sim::Time - %obj.lastShove < 0.5) {
+	if (%slot != 4 || !%state || $Sim::Time - %obj.lastShove < 0.8) {
 		return;
 	}
 
