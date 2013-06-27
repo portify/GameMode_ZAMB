@@ -110,7 +110,56 @@ function playerSurvivorArmor::onDisabled(%this, %obj) {
 	parent::onDisabled(%this, %obj);
 }
 
+datablock fxLightData(playerFlashlightData : playerLight) {
+	uiName = "";
+	flareOn = 0;
+
+	radius = 3.25;
+	brightness = 10;
+};
+
 package zambSurvivorPackage {
+	function serverCmdLight(%client) {
+		if (%client.miniGame !$= $defaultMiniGame) {
+			parent::serverCmdLight(%client);
+			return;
+		}
+
+		%player = %client.player;
+
+		if (!isObject(%player)) {
+			parent::serverCmdLight(%client);
+			return;
+		}
+
+		if (getSimTime() - %player.lastLightTime < 250) {
+			return;
+		}
+
+		%player.lastLightTime = getSimTime();
+		serverPlay3D(zamb_survivor_flashlight, %player.getHackPosition());
+
+		if (isObject(%player.light)) {
+			%player.light.delete();
+		}
+		else {
+			%player.light = new fxLight() {
+				datablock = playerFlashlightData;
+				iconSize = 1;
+
+				player = %player;
+				enable = 1;
+			};
+
+			missionCleanup.add(%player.light);
+			%player.light.setTransform(%player.getTransform());
+
+			if (!isEventPending(%player.flashlightTick)) {
+				%player.flashlightTick();
+			}
+		}
+	}
+
 	function player::activateStuff(%this) {
 		%miniGame = getMiniGameFromObject(%this);
 
@@ -149,6 +198,10 @@ package zambSurvivorPackage {
 };
 
 activatePackage("zambSurvivorPackage");
+
+function player::flashlightTick(%this) {
+	//
+}
 
 function player::useObject(%this, %obj) {
 	return false;

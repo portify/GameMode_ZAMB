@@ -274,17 +274,17 @@ zambRegisterSound(zamb_survivor_swing_world, "survivor/swing_world");
 
 zambRegisterSound(zamb_ambience_rumble_rain, "ambience/rumble_rain");
 
-zambRegisterSound(zamb_ambience_thunderstorm_lightning1, "ambience/lightning1");
-zambRegisterSound(zamb_ambience_thunderstorm_lightning2, "ambience/lightning2");
-zambRegisterSound(zamb_ambience_thunderstorm_lightning3, "ambience/lightning3");
-zambRegisterSound(zamb_ambience_thunderstorm_lightning4, "ambience/lightning4");
+zambRegisterSound(zamb_ambience_thunderstorm_lightning1, "ambience/thunderstorm/lightning1");
+zambRegisterSound(zamb_ambience_thunderstorm_lightning2, "ambience/thunderstorm/lightning2");
+zambRegisterSound(zamb_ambience_thunderstorm_lightning3, "ambience/thunderstorm/lightning3");
+zambRegisterSound(zamb_ambience_thunderstorm_lightning4, "ambience/thunderstorm/lightning4");
 
-zambRegisterSound(zamb_ambience_thunderstorm_thunder1, "ambience/thunder1");
-zambRegisterSound(zamb_ambience_thunderstorm_thunder2, "ambience/thunder2");
-zambRegisterSound(zamb_ambience_thunderstorm_thunder3, "ambience/thunder3");
+zambRegisterSound(zamb_ambience_thunderstorm_thunder1, "ambience/thunderstorm/thunder1");
+zambRegisterSound(zamb_ambience_thunderstorm_thunder2, "ambience/thunderstorm/thunder2");
+zambRegisterSound(zamb_ambience_thunderstorm_thunder3, "ambience/thunderstorm/thunder3");
 
-zambRegisterSound(zamb_ambience_thunderstorm_thunderFar1, "ambience/thunder_far1");
-zambRegisterSound(zamb_ambience_thunderstorm_thunderFar2, "ambience/thunder_far2");
+zambRegisterSound(zamb_ambience_thunderstorm_thunderFar1, "ambience/thunderstorm/thunder_far1");
+zambRegisterSound(zamb_ambience_thunderstorm_thunderFar2, "ambience/thunderstorm/thunder_far2");
 
 zambLoadFootsteps();
 schedule(0, 0, "startAmbience");
