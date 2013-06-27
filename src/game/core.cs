@@ -26,7 +26,10 @@ function ZAMB::onAdd(%this) {
 		%this.sound = new scriptObject() {
 			class = zambSound;
 			core = %this;
-			type = "thunderstorm";
+			
+			wind = 1;
+			windHits = 1;
+			thunderHits = 1;
 		};
 	}
 }

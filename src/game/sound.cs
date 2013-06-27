@@ -1,60 +1,118 @@
 function zambSound::onAdd(%this) {
-	if (%this.type !$= "") {
-		%type = %this.type;
+	if (%this.rainA) {
+		%this.setRain(%this.rainA, %this.rainB);
+	}
 
-		%this.type = "";
-		%this.setType(%type);
+	if (%this.wind) {
+		%this.setWind(%this.wind);
+	}
+
+	if (%this.windHits) {
+		%this.setWindHits(%this.windHits);
+	}
+
+	if (%this.thunderHits) {
+		%this.setThunderHits(%this.thunderHits);
 	}
 }
 
-function zambSound::setType(%this, %type) {
-	if (%this.type !$= "") {
-		switch$ (%this.type) {
-			case "rain":
-				%this.stopEmitLoop(zamb_ambience_rumble_rain);
-			case "thunderstorm":
-				%this.stopEmitLoop(zamb_ambience_rumble_rain);
-				cancel(%this.lightningStrikeController);
-		}
-	}
+function zambSound::setRain(%this, %a, %b) {
+	%this.stopEmitLoop("zamb_ambience_rain_" @ %this.rainA @ "_" @ %this.rainB);
 
-	%this.type = %type;
+	%this.rainA = %a;
+	%this.rainB = %b;
 
-	switch$ (%type) {
-		case "rain":
-			%this.emitLoop(zamb_ambience_rumble_rain, 0.75);
-		case "thunderstorm":
-			%this.emitLoop(zamb_ambience_rumble_rain, 0.65);
-			%this.lightningStrikeController();
+	%profile = "zamb_ambience_rain_" @ %a @ "_" @ %b;
+
+	if (isObject(%profile)) {
+		%this.emitLoop(%profile, 0.65);
 	}
 }
 
-function zambSound::lightningStrike(%this) {
-	%n = 9;
+function zambSound::setWind(%this, %wind) {
+	%this.stopEmitLoop("zamb_ambience_wind_" @ %this.wind);
+	%this.wind = %wind;
 
-	%p0 = zamb_ambience_thunderstorm_lightning1;
-	%p1 = zamb_ambience_thunderstorm_lightning2;
-	%p2 = zamb_ambience_thunderstorm_lightning3;
-	%p3 = zamb_ambience_thunderstorm_lightning4;
-	%p4 = zamb_ambience_thunderstorm_thunder1;
-	%p5 = zamb_ambience_thunderstorm_thunder2;
-	%p6 = zamb_ambience_thunderstorm_thunder3;
-	%p7 = zamb_ambience_thunderstorm_thunderFar1;
-	%p8 = zamb_ambience_thunderstorm_thunderFar1;
+	%profile = "zamb_ambience_wind_" @ %wind;
+
+	if (isObject(%profile)) {
+		%this.emitLoop(%profile, 0.75);
+	}
+}
+
+function zambSound::setWindHits(%this, %bool) {
+	%pending = isEventPending(%this.windHitController);
+	%this.windHits = %bool ? 1 : 0;
+
+	if (%bool && !%pending) {
+		%this.windHitController();
+	}
+	else if (!%bool && %pending) {
+		cancel(%this.windHitController);
+	}
+}
+
+function zambSound::setThunderHits(%this, %bool) {
+	%pending = isEventPending(%this.thunderHitController);
+	%this.thunderHits = %bool ? 1 : 0;
+
+	if (%bool && !%pending) {
+		%this.thunderHitController();
+	}
+	else if (!%bool && %pending) {
+		cancel(%this.thunderHitController);
+	}
+}
+
+function zambSound::windHitController(%this) {
+	cancel(%this.windHitController);
+	%time = getRandom(10000, 15000);
+
+	%this.windHit();
+	%this.windHitController = %this.schedule(%time, "windHitController");
+}
+
+function zambSound::thunderHitController(%this) {
+	cancel(%this.thunderHitController);
+	%time = getRandom(5500, 10000);
+
+	%this.thunderHit();
+	%this.thunderHitController = %this.schedule(%time, "thunderHitController");
+}
+
+function zambSound::windHit(%this) {
+	%p0 = zamb_ambience_wind_hit1;
+	%p1 = zamb_ambience_wind_hit2;
+	%p2 = zamb_ambience_wind_hit3;
+	%p3 = zamb_ambience_wind_med1;
+	%p4 = zamb_ambience_wind_med2;
+	%p5 = zamb_ambience_wind_gust1;
+	%p6 = zamb_ambience_wind_gust2;
+	%p7 = zamb_ambience_wind_snippet1;
+	%p8 = zamb_ambience_wind_snippet2;
+	%p9 = zamb_ambience_wind_snippet3;
+
+	echo(getSimTime() SPC "windHit");
+	%this.emit(%p[getRandom(0, 9)], 0.8 + getRandom() * 0.2);
+}
+
+function zambSound::thunderHit(%this) {
+	%p0 = zamb_ambience_thunder_lightning1;
+	%p1 = zamb_ambience_thunder_lightning2;
+	%p2 = zamb_ambience_thunder_lightning3;
+	%p3 = zamb_ambience_thunder_lightning4;
+	%p4 = zamb_ambience_thunder_thunder1;
+	%p5 = zamb_ambience_thunder_thunder2;
+	%p6 = zamb_ambience_thunder_thunder3;
+	%p7 = zamb_ambience_thunder_far1;
+	%p8 = zamb_ambience_thunder_far2;
 
 	if (isObject(Sky)) {
 		Sky.stormClouds(1, 0.75 + getRandom() * 0.5);
 	}
 
-	%this.emit(%p[getRandom(0, %n - 1)], 0.75 + getRandom() * 0.25);
-}
-
-function zambSound::lightningStrikeController(%this) {
-	cancel(%this.lightningStrikeController);
-	%time = getRandom(5500, 10000);
-
-	%this.lightningStrike();
-	%this.lightningStrikeController = %this.schedule(%time, "lightningStrikeController");
+	echo(getSimTime() SPC "thunderHit");
+	%this.emit(%p[getRandom(0, 8)], 0.75 + getRandom() * 0.25);
 }
 
 function zambSound::emit(%this, %profile, %volume, %time) {
@@ -125,17 +183,17 @@ function zambSound::emitLoop(%this, %profile, %volume) {
 	};
 
 	missionCleanup.add(%emitter);
-
 	%emitter.setName(%name);
-	%emitter.scheduleNoQuota(%time, "delete");
 
 	return %emitter;
 }
 
 function zambSound::stopEmitLoop(%this, %profile) {
-	%name = "_loopingAmbient_" @ %profile.getID();
+	if (isObject(%profile)) {
+		%name = "_loopingAmbient_" @ %profile.getID();
 
-	if (isObject(%name)) {
-		%name.delete();
+		if (isObject(%name)) {
+			%name.delete();
+		}
 	}
 }
