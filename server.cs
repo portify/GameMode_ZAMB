@@ -6,6 +6,31 @@ if ($GameModeArg !$= "Add-Ons/GameMode_ZAMB/gamemode.txt") {
 	return;
 }
 
+package zambPackage {
+	function miniGameCanDamage(%a, %b) {
+		%parent = parent::miniGameCanDamage(%a, %b);
+
+		%m1 = getMiniGameFromObject(%a);
+		%m2 = getMiniGameFromObject(%b);
+
+		if (%m1 != %m2 || %m2 != $defaultMiniGame || !isObject($defaultMiniGame)) {
+			return %parent;
+		}
+
+		%t1 = %a.getType() & $TypeMasks::PlayerObjectType;
+		%t2 = %b.getType() & $TypeMasks::PlayerObjectType;
+
+		if ( !%t1 || !%t2 )
+		{
+			return %parent;
+		}
+
+		return 1;
+	}
+};
+
+activatePackage("zambPackage");
+
 exec("./lib/ts-pathing.cs");
 exec("./lib/vizard.cs");
 exec("./lib/nodes.cs");
