@@ -97,6 +97,14 @@ function baseZombieData::zombieTick(%this, %obj, %delta) {
 				%obj.setActionThread("root");
 			}
 
+			if (isObject(%obj.path)) {
+				%obj.path.delete();
+				%obj.path = "";
+
+				%obj.pathIndex = "";
+				%obj.pathTarget = "";
+			}
+
 			return;
 		}
 	}
@@ -176,9 +184,82 @@ function baseZombieData::directZombieMovement(%this, %obj) {
 	%obj.setAimObject(%obj.target);
 	%obj.setMoveObject(%obj.target);
 
+	if (isObject(%obj.path)) {
+		%obj.path.delete();
+		%obj.path = "";
+
+		%obj.pathIndex = "";
+		%obj.pathTarget = "";
+	}
+
 	return 1;
 }
 
+function baseZombieData::onReachDestination(%this, %obj) {
+	parent::onReachDestination(%this, %obj);
+
+	if (%obj.path !$= "" && %obj.pathTarget !$= "") {
+		%obj.pathIndex = %obj.pathTarget;
+		%obj.pathTarget = "";
+
+		%this.zombieTick(%obj, $Sim::Time - %obj.lastZombieTick);
+	}
+}
+
 function baseZombieData::pathedZombieMovement(%this, %obj) {
+	if (!isObject(NodeGroup) || !NodeGroup.getCount()) {
+		return 0;
+	}
+
+	%b = NodeGroup.findNearest(%obj.target.position, 16, 1);
+
+	if (!isObject(%b)) {
+		return 0;
+	}
+
+	%a = NodeGroup.findNearest(%obj.position, 16, 1);
+
+	if (!isObject(%a)) {
+		return false;
+	}
+
+	if (%obj.path.b != %b) {
+		if (isObject(%obj.path)) {
+			%obj.path.delete();
+		}
+
+		%obj.path = findPath(%a, %b);
+
+		%obj.pathIndex = 0;
+		%obj.pathTarget = "";
+	}
+
+	if (!%obj.path.done || %obj.path.result $= "error") {
+		return 0;
+	}
+
+	if (%obj.pathIndex >= getWordCount(%obj.path.result)) {
+		return 0;
+	}
+
+	%lookAhead = 5;
+
+	for (%i = %obj.pathIndex + %lookAhead; %i >= %obj.pathIndex; %i--) {
+		%node = getWord(%obj.path.result, %i);
+
+		%ray = containerRayCast(
+			vectorAdd(%obj.position, "0 0" SPC %this.maxStepHeight),
+			vectorAdd(%node.position, "0 0" SPC %this.maxStepHeight),
+			$TypeMasks::FxBrickObjectType
+		);
+
+		if (%ray $= "0") {
+			%obj.pathTarget = %i + 1;
+			%obj.setMoveDestination(%node.position);
+
+			return 1;
+		}
+	}
+
 	return 0;
 }

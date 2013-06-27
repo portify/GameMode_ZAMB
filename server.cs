@@ -6,13 +6,15 @@ if ($GameModeArg !$= "Add-Ons/GameMode_ZAMB/gamemode.txt") {
 	return;
 }
 
-exec( "./lib/ts-pathing.cs" );
-exec( "./lib/loa.cs" );
+exec("./lib/ts-pathing.cs");
+exec("./lib/vizard.cs");
+exec("./lib/nodes.cs");
+exec("./lib/loa.cs");
 
-exec( "./src/sounds.cs" );
-exec( "./src/zombie.cs" );
-exec( "./src/survivor.cs" );
+exec("./src/sounds.cs");
+exec("./src/zombie.cs");
+exec("./src/survivor.cs");
 
-exec( "./src/game/core.cs" );
-exec( "./src/game/director.cs" );
-exec( "./src/game/sound.cs" );
+exec("./src/game/core.cs");
+exec("./src/game/director.cs");
+exec("./src/game/sound.cs");
