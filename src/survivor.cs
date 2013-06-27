@@ -224,7 +224,7 @@ function player::flashlightTick(%this) {
 		%this.light.inspectPostApply();
 	}
 
-	%this.flashlightTick = %this.schedule(25, "flashlightTick");
+	%this.flashlightTick = %this.schedule(32, "flashlightTick");
 }
 
 function player::useObject(%this, %obj) {

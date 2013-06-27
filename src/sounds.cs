@@ -66,27 +66,9 @@ function zambLoadFootsteps()
 }
 
 package zambFootstepPackage {
-	function armor::onNewDataBlock(%this, %obj) {
-		parent::onNewDataBlock(%this, %obj);
-
-		if (!isEventPending(%obj.footstepTick)) {
-			%obj.footstepUpdateTick();
-		}
-	}
-
 	function armor::onTrigger(%this, %obj, %slot, %state) {
 		parent::onTrigger(%this, %obj, %slot, %state);
 		%obj.trigger[%slot] = %state;
-	}
-
-	function armor::onDisabled(%this, %obj) {
-		%miniGame = getMiniGameFromObject(%obj);
-
-		if (%miniGame $= $defaultMiniGame && isObject(%obj.client)) {
-			%obj.client.play2D(zamb_music_death);
-		}
-
-		parent::onDisabled(%this, %obj);
 	}
 };
 

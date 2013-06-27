@@ -7,6 +7,7 @@ if ($GameModeArg !$= "Add-Ons/GameMode_ZAMB/gamemode.txt") {
 }
 
 exec( "./lib/ts-pathing.cs" );
+exec( "./lib/loa.cs" );
 
 exec( "./src/sounds.cs" );
 exec( "./src/zombie.cs" );

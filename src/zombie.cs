@@ -31,18 +31,17 @@ datablock playerData(baseZombieData : playerStandardArmor) {
 
 function baseZombieData::onAdd(%this, %obj) {
 	parent::onAdd(%this, %obj);
-	%obj.footstepUpdateTick();
+	// %obj.footstepUpdateTick();
 
 	if (%this.enableRandomMoveSpeed && %obj.getClassName() $= "AIPlayer") {
 		%obj.setMoveSpeed(%this.moveSpeedMin + getRandom() * (%this.moveSpeedMax - %this.moveSpeedMin));
 	}
 
-	%obj.setMoveTolerance(3);
+	%obj.setMoveTolerance(1.78);
 	%obj.setMoveSlowdown(0);
-}
 
-function baseZombieData::onNewDataBlock(%this, %obj) {
-	parent::onNewDataBlock(%this, %obj);
+	%obj.maxYawSpeed = 6;
+	%obj.maxPitchSpeed = 3;
 
 	if (isObject(%obj.client)) {
 		%this.zombifyClientAppearance(%obj, %obj.client);
@@ -52,11 +51,27 @@ function baseZombieData::onNewDataBlock(%this, %obj) {
 	}
 }
 
+function baseZombieData::onRemove(%this, %obj) {
+	if (isObject(%obj.path)) {
+		%obj.path.delete();
+	}
+}
+
 function baseZombieData::applyZombieAppearance(%this, %obj) {
 	%obj.setFaceName("asciiTerror");
+	// %obj.setDecalName("HCZombie");
 
-	%obj.mountImage(zombieClawLeftImage, 0);
-	%obj.mountImage(zombieClawRightImage, 1);
+	%obj.setNodeColor("headSkin", "0 0.5 0.25 1");
+	%obj.setNodeColor("lhand", "0 0.5 0.25 1");
+	%obj.setNodeColor("rhand", "0 0.5 0.25 1");
+
+	%obj.setNodeColor("chest", "0.392 0.196 0 1");
+	%obj.setNodeColor("larm", "0.392 0.196 0 1");
+	%obj.setNodeColor("rarm", "0.392 0.196 0 1");
+
+	%obj.setNodeColor("pants", "0.2 0.2 0.2 1");
+	%obj.setNodeColor("lshoe", "0.2 0.2 0.2 1");
+	%obj.setNodeColor("rshoe", "0.2 0.2 0.2 1");
 
 	%obj.playThread(3, "armReadyBoth");
 }
@@ -70,6 +85,26 @@ function baseZombieData::zombieTick(%this, %obj, %delta) {
 	%obj.clearAim();
 	%obj.setMoveX(0);
 
+	%this.updateZombieTarget(%obj);
+
+	if (%obj.target $= "") {
+		return;
+	}
+
+	if (!%this.directZombieMovement(%obj)) {
+		if (!%this.pathedZombieMovement(%obj)) {
+			if (vectorLen(%obj.getVelocity()) < 0.15) {
+				%obj.setActionThread("root");
+			}
+
+			return;
+		}
+	}
+
+	%obj.updateLOA();
+}
+
+function baseZombieData::updateZombieTarget(%this, %obj) {
 	if (%obj.target !$= "" && !%this.isValidTarget(%obj, %obj.target)) {
 		%obj.target = "";
 	}
@@ -108,11 +143,6 @@ function baseZombieData::zombieTick(%this, %obj, %delta) {
 	else if (%obj.target !$= "") {
 		%obj.target = "";
 	}
-
-	if (%obj.target !$= "") {
-		%obj.setAimObject(%obj.target);
-		%obj.setMoveObject(%obj.target);
-	}
 }
 
 function baseZombieData::shouldHaveTarget(%this, %obj) {
@@ -130,4 +160,25 @@ function baseZombieData::getTargetScore(%this, %obj, %target) {
 	%sum += %target.getDamageLevel() / %target.getDataBlock().maxDamage;
 
 	return %sum / 2;
+}
+
+function baseZombieData::directZombieMovement(%this, %obj) {
+	%ray = containerRayCast(
+		vectorAdd(%obj.position, "0 0" SPC %this.maxStepHeight),
+		vectorAdd(%obj.target.position, "0 0" SPC %this.maxStepHeight),
+		$TypeMasks::FxBrickObjectType
+	);
+
+	if (%ray !$= "0") {
+		return 0;
+	}
+
+	%obj.setAimObject(%obj.target);
+	%obj.setMoveObject(%obj.target);
+
+	return 1;
+}
+
+function baseZombieData::pathedZombieMovement(%this, %obj) {
+	return 0;
 }
