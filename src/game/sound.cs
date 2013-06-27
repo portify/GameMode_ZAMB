@@ -23,9 +23,10 @@ function zambSound::setRain(%this, %a, %b) {
 	%this.rainB = %b;
 
 	%profile = "zamb_ambience_rain_" @ %a @ "_" @ %b;
+	echo(%profile);
 
 	if (isObject(%profile)) {
-		%this.emitLoop(%profile, 0.65);
+		%this.emitLoop(%profile, 0.8);
 	}
 }
 
@@ -36,7 +37,7 @@ function zambSound::setWind(%this, %wind) {
 	%profile = "zamb_ambience_wind_" @ %wind;
 
 	if (isObject(%profile)) {
-		%this.emitLoop(%profile, 0.75);
+		%this.emitLoop(%profile, 0.85);
 	}
 }
 

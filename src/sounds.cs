@@ -99,6 +99,14 @@ function Player::footstepUpdateTick(%this) {
 		return;
 	}
 
+	%vz = getWord(%this.getVelocity(), 2);
+
+	if (%this.lastVZ < -6 && %vz >= -0.75) {
+		%this.playFootstepSound();
+	}
+
+	%this.lastVZ = %vz;
+
 	%tick = 0;
 	%pending = isEventPending(%this.footstepTick);
 
@@ -123,7 +131,7 @@ function Player::footstepUpdateTick(%this) {
 		cancel(%this.footstepTick);
 	}
 
-	%this.footstepUpdateTick = %this.schedule(50, "footstepUpdateTick");
+	%this.footstepUpdateTick = %this.schedule(40, "footstepUpdateTick");
 }
 
 function Player::footstepTick(%this) {
