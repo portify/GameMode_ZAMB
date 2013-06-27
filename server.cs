@@ -9,7 +9,9 @@ if ($GameModeArg !$= "Add-Ons/GameMode_ZAMB/gamemode.txt") {
 exec( "./lib/ts-pathing.cs" );
 
 exec( "./src/sounds.cs" );
-exec( "./src/core.cs" );
-
 exec( "./src/zombie.cs" );
 exec( "./src/survivor.cs" );
+
+exec( "./src/game/core.cs" );
+exec( "./src/game/director.cs" );
+exec( "./src/game/sound.cs" );

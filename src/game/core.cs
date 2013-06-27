@@ -22,10 +22,11 @@ function ZAMB::onAdd(%this) {
 		};
 	}
 
-	if (!isObject(%this.soundDirector)) {
-		%this.soundDirector = new scriptObject() {
-			class = zambSoundDirector;
+	if (!isObject(%this.sound)) {
+		%this.sound = new scriptObject() {
+			class = zambSound;
 			core = %this;
+			type = "thunderstorm";
 		};
 	}
 }
@@ -39,8 +40,8 @@ function ZAMB::onRemove(%this) {
 		%this.director.delete();
 	}
 
-	if (isObject(%this.soundDirector)) {
-		%this.soundDirector.delete();
+	if (isObject(%this.sound)) {
+		%this.sound.delete();
 	}
 }
 
