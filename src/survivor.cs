@@ -114,8 +114,8 @@ datablock fxLightData(playerFlashlightData : playerLight) {
 	uiName = "";
 	flareOn = 0;
 
-	radius = 3.25;
-	brightness = 10;
+	radius = 10;
+	brightness = 3;
 };
 
 package zambSurvivorPackage {
@@ -200,7 +200,31 @@ package zambSurvivorPackage {
 activatePackage("zambSurvivorPackage");
 
 function player::flashlightTick(%this) {
-	//
+	cancel(%this.flashlightTick);
+
+	if (%this.getState() $= "Dead" || !isObject(%this.light)) {
+		return;
+	}
+
+	%start = %this.getEyePoint();
+	%vector = %this.getEyeVector();
+
+	%end = vectorAdd(%start, vectorScale(%vector, 50));
+	%ray = containerRayCast(%start, %end, $TypeMasks::All, %this);
+
+	if (%ray $= "0") {
+		%pos = %end;
+	}
+	else {
+		%pos = vectorSub(getWords(%ray, 1, 3), %vector);
+	}
+
+	if (vectorDist(%pos, %this.light.position) >= 0.05) {
+		%this.light.setTransform(%pos);
+		%this.light.inspectPostApply();
+	}
+
+	%this.flashlightTick = %this.schedule(32, "flashlightTick");
 }
 
 function player::useObject(%this, %obj) {
