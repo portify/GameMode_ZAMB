@@ -5,3 +5,6 @@
 ## Libraries Used
 
 * ts-pathing
+* vizard
+* nodes
+* loa
