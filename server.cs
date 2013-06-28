@@ -46,6 +46,7 @@ exec("./lib/nodes.cs");
 exec("./lib/loa.cs");
 
 exec("./src/sounds.cs");
+exec("./src/datablocks.cs");
 exec("./src/zombie.cs");
 exec("./src/survivor.cs");
 

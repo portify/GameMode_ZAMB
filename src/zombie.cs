@@ -62,16 +62,12 @@ function baseZombieData::applyZombieAppearance(%this, %obj) {
 	// %obj.setDecalName("HCZombie");
 
 	%obj.setNodeColor("headSkin", "0 0.5 0.25 1");
-	%obj.setNodeColor("lhand", "0 0.5 0.25 1");
-	%obj.setNodeColor("rhand", "0 0.5 0.25 1");
 
-	%obj.setNodeColor("chest", "0.392 0.196 0 1");
-	%obj.setNodeColor("larm", "0.392 0.196 0 1");
-	%obj.setNodeColor("rarm", "0.392 0.196 0 1");
+	%obj.hideNode("lhand");
+	%obj.hideNode("rhand");
 
-	%obj.setNodeColor("pants", "0.2 0.2 0.2 1");
-	%obj.setNodeColor("lshoe", "0.2 0.2 0.2 1");
-	%obj.setNodeColor("rshoe", "0.2 0.2 0.2 1");
+	%obj.mountImage(zambClawRight, 0);
+	%obj.mountImage(zambClawLeft, 1);
 
 	%obj.playThread(3, "armReadyBoth");
 }
