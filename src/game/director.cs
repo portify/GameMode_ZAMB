@@ -1,6 +1,6 @@
 $ZOMBIE_LIMIT = 40;
 
-$DIRECTOR_THINK_QUOTA = 2;
+$DIRECTOR_THINK_QUOTA = 5;
 $DIRECTOR_TICK_RATE = 100;
 
 function zambDirector::start(%this) {
@@ -36,7 +36,14 @@ function zambDirector::getZombieCount(%this) {
 function zambDirector::tick(%this) {
 	cancel(%this.tick);
 
-	if(%this.nextHorde < $Sim::Time) {
+	if (%this.nextQuarantineSound $= "") {
+		%this.nextQuarantineSound = $Sim::Time + getRandom(60, 200);
+	}
+	else if ($Sim::Time > %this.nextQuarantineSound) {
+		serverPlay2D("zamb_music_quarantine" @ getRandom(1, 3));
+	}
+
+	if (%this.nextHorde < $Sim::Time) {
 		%this.spawnHorde();
 		%this.nextHorde = $Sim::Time + %this.getHordeSpawnInterval();
 	}
