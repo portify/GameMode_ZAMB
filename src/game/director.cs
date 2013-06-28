@@ -41,6 +41,7 @@ function zambDirector::tick(%this) {
 	}
 	else if ($Sim::Time > %this.nextQuarantineSound) {
 		serverPlay2D("zamb_music_quarantine" @ getRandom(1, 3));
+		%this.nextQuarantineSound = $Sim::Time + getRandom(60, 200);
 	}
 
 	if (%this.nextHorde < $Sim::Time) {
