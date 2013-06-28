@@ -1,3 +1,23 @@
+// $skinColorRedMin = 0;
+// $skinColorRedMax = 0;
+
+$skinColorRedMin = 0.1;
+$skinColorRedMax = 0.6;
+
+// $skinColorGreenMin = 0.150;
+// $skinColorGreenMax = 0.450;
+
+$skinColorGreenMin = 0.15;
+$skinColorGreenMax = 0.75;
+
+// $skinColorBlueMin = 0.150;
+// $skinColorBlueMax = 0.450;
+
+$skinColorBlueMin = 0.15;
+$skinColorBlueMin = 0.60;
+
+$skinColorSym = "gb";
+
 datablock playerData(baseZombieData : playerStandardArmor) {
 	uiName = "";
 
@@ -43,6 +63,7 @@ function baseZombieData::onAdd(%this, %obj) {
 	%obj.maxYawSpeed = 6;
 	%obj.maxPitchSpeed = 3;
 
+	%obj.setActionThread("root");
 	%this.applyZombieAppearance(%obj);
 }
 
@@ -53,9 +74,13 @@ function baseZombieData::onRemove(%this, %obj) {
 }
 
 function baseZombieData::applyZombieAppearance(%this, %obj) {
-	%skin = "0.541 0.698 0.552 1";
+	// %skin = "0.541 0.698 0.552 1";
+	%skin = getZombieSkinColor();
 
 	%obj.setNodeColor("headSkin", %skin);
+	%obj.setNodeColor("lhand", %skin);
+	%obj.setNodeColor("rhand", %skin);
+
 	%obj.setFaceName("asciiTerror");
 
 	%hat = getRandom(0, 7);
@@ -63,15 +88,6 @@ function baseZombieData::applyZombieAppearance(%this, %obj) {
 
 	%obj.hideNode($Chest[0]);
 	%obj.playThread(1, "armReadyBoth");
-
-	%obj.mountImage(zambClawRight, 0);
-	%obj.mountImage(zambClawLeft, 1);
-
-	%obj.hideNode("LHand");
-	%obj.hideNode("RHand");
-
-	%obj.hideNode("LHook");
-	%obj.hideNode("RHook");
 
 	if (%hat != 4 && %hat != 6 && %hat != 7) {
 		%hat = 0;
@@ -86,10 +102,13 @@ function baseZombieData::applyZombieAppearance(%this, %obj) {
 			case 4: %garment = "pants";
 			case 5: %garment = "lshoe";
 			case 6: %garment = "rshoe";
-			default: continue;
 		}
 
-		if (%i != 4 && %i != 5 && (%i == 0 || %i == 1 || %i == 6 || getRandom() >= 0.5)) {
+		if (%garment $= "" || %garment $= "none") {
+			continue;
+		}
+
+		if (%i == 0 || %i == 1 || %i == 4 || %i == 6 || getRandom() >= 0.5) {
 			%r = getRandom(50, 125) / 255;
 			%g = getRandom(50, 125) / 255;
 			%b = getRandom(50, 125) / 255;
@@ -105,8 +124,45 @@ function baseZombieData::applyZombieAppearance(%this, %obj) {
 	}
 }
 
-function baseZombieData::zombifyClientAppearance(%this, %obj, %client) {
-	%this.applyZombieAppearance(%obj);
+function getZombieSkinColor()
+{
+	%redMin = $skinColorRedMin * 100;
+	%redMax = $skinColorRedMax * 100;
+	%greenMin = $skinColorGreenMin * 100;
+	%greenMax = $skinColorGreenMax * 100;
+	%blueMin = $skinColorblueMin * 100;
+	%blueMax = $skinColorblueMax * 100;
+	
+	%red = getRandom(%redMin, %redMax) / 100;
+	%blue = getRandom(%blueMin, %blueMax) / 100;
+	%green = getRandom(%greenMin, %greenMax) / 100;
+
+	if ($skinColorSym !$= "") {
+		switch$ ($skinColorSym) {
+			case "rg":
+				%sym = (%red + %green) / 2;
+				%red = %sym;
+				%green = %sym;
+			
+			case "rb":
+				%sym = (%red + %blue) / 2;
+				%red = %sym;
+				%blue = %sym;
+
+			case "gb":
+				%sym = (%green + %blue) / 2;
+				%green = %sym;
+				%blue = %sym;
+
+			case "rgb":
+				%sym = (%red + %green + %blue) / 3;
+				%red = %sym;
+				%green = %sym;
+				%blue = %sym;
+		}
+	}
+
+	return %red SPC %green SPC %blue SPC 1;
 }
 
 function baseZombieData::zombieTick(%this, %obj, %delta) {
@@ -144,9 +200,6 @@ function baseZombieData::updateZombieTarget(%this, %obj) {
 	}
 
 	if (%this.shouldHaveTarget(%obj)) {
-		%bestScore = 0;
-		%bestTarget = -1;
-
 		for (%i = 0; %i < $defaultMiniGame.numMembers; %i++) {
 			%client = $defaultMiniGame.member[%i];
 			%player = %client.player;
@@ -154,14 +207,14 @@ function baseZombieData::updateZombieTarget(%this, %obj) {
 			if (%this.isValidTarget(%obj, %player)) {
 				%score = %this.getTargetScore(%obj, %player);
 
-				if (%score > %bestScore) {
+				if (%bestScore $= "" || %score > %bestScore) {
 					%bestScore = %score;
 					%bestTarget = %player;
 				}
 			}
 		}
 
-		if (%bestTarget != -1) {
+		if (%bestTarget !$= -1) {
 			if (%obj.target $= "") {
 				%obj.target = %bestTarget;
 			}
@@ -190,7 +243,7 @@ function baseZombieData::isValidTarget(%this, %obj, %target) {
 function baseZombieData::getTargetScore(%this, %obj, %target) {
 	%sum = 0;
 
-	%sum += mClampF(1 - (vectorDist(%obj.position, %target.position) / 150), 0, 1);
+	%sum += 1 - (vectorDist(%obj.position, %target.position) / 50);
 	%sum += %target.getDamageLevel() / %target.getDataBlock().maxDamage;
 
 	return %sum / 2;
@@ -198,8 +251,8 @@ function baseZombieData::getTargetScore(%this, %obj, %target) {
 
 function baseZombieData::directZombieMovement(%this, %obj) {
 	%ray = containerRayCast(
-		vectorAdd(%obj.getEyePoint()),
-		vectorAdd(%obj.target.getEyePoint()),
+		%obj.getEyePoint(),
+		%obj.target.getEyePoint(),
 		$TypeMasks::FxBrickObjectType
 	);
 
@@ -354,7 +407,7 @@ function player::_zfRay(%this, %z, %f) {
 	%start = vectorAdd(%this.position, "0 0" SPC %z * %scale);
 	%end = vectorAdd(%start, %forward);
 
-	%ray = debugContainerRayCast(%start, %end, $TypeMasks::FxBrickObjectType);
+	%ray = containerRayCast(%start, %end, $TypeMasks::FxBrickObjectType);
 	return %ray !$= 0;
 }
 

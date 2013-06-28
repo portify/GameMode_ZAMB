@@ -36,6 +36,18 @@ package zambPackage {
 			parent::removeBody(%this);
 		}
 	}
+
+	function player::playPain(%this) {
+		if (!%this.getDataBlock().isZombie) {
+			parent::playPain(%this);
+		}
+	}
+
+	function player::emote(%this, %emote) {
+		if (!%this.getDataBlock().isZombie || %emote !$= "PainLowImage") {
+			parent::emote(%this, %emote);
+		}
+	}
 };
 
 activatePackage("zambPackage");
@@ -45,7 +57,6 @@ exec("./lib/vizard.cs");
 exec("./lib/nodes.cs");
 
 exec("./src/sounds.cs");
-exec("./src/datablocks.cs");
 exec("./src/zombie.cs");
 exec("./src/survivor.cs");
 

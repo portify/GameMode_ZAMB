@@ -1,13 +1,150 @@
-function zambDirector::onAdd(%this) {
-	if (!isObject(%this.core)) {
-		error("ERROR: ZAMB director created without 'core' attribute.");
+$ZOMBIE_LIMIT = 40;
+
+$DIRECTOR_THINK_QUOTA = 2;
+$DIRECTOR_TICK_RATE = 100;
+
+function zambDirector::start(%this) {
+	if (%this.isActive()) {
+		error("ERROR: Director is already active.");
+		return;
 	}
 
-	%this.state = 0;
+	%this.tick = %this.schedule(0, "tick");
+	%this.thinkIndex = 0;
+
+	%this.nextHorde = %this.getHordeSpawnInterval();
+	%this.prevCommon = "";
 }
 
-function zambDirector::spawn(%this, %dataBlock, %transform) {
-	if (%this.core.zombies.getCount() >= 50) {
+function zambDirector::stop(%this) {
+	if (!%this.isActive()) {
+		error("ERROR: Director is not active.");
+		return;
+	}
+
+	cancel(%this.tick);
+}
+
+function zambDirector::isActive(%this) {
+	return isEventPending(%this.tick);
+}
+
+function zambDirector::getZombieCount(%this) {
+	return %this.core.zombies.getCount();
+}
+
+function zambDirector::tick(%this) {
+	cancel(%this.tick);
+
+	if(%this.nextHorde < $Sim::Time) {
+		%this.spawnHorde();
+		%this.nextHorde = $Sim::Time + %this.getHordeSpawnInterval();
+	}
+
+	%interval = %this.getCommonSpawnInterval();
+
+	if (%interval != -1 && $Sim::Time - %this.prevCommon >= %interval) {
+		%this.spawnCommon();
+		%this.prevCommon = $Sim::Time;
+	}
+
+	%count = %this.getZombieCount();
+	%usage = 0;
+
+	while (%count && %usage < $DIRECTOR_THINK_QUOTA) {
+		%this.thinkIndex = %this.thinkIndex % %count;
+		%obj = %this.core.zombies.getObject(%this.thinkIndex);
+
+		if (!isObject(%obj) || %seen[%obj]) {
+			break;
+		}
+
+		if (%obj.getState() $= "Dead") {
+			%this.core.zombies.remove(%obj);
+			%this.thinkIndex--;
+
+			%count--;
+			continue;
+		}
+
+		if (%obj.lastZombieTick $= "") {
+			%delta = 0;
+		}
+		else {
+			%delta = $Sim::Time - %obj.lastZombieTick;
+		}
+
+		%obj.lastZombieTick = $Sim::Time;
+		%obj.getDataBlock().zombieTick(%obj, %delta);
+
+		%seen[%obj] = 1;
+
+		%this.thinkIndex++;
+		%usage++;
+	}
+
+	if ($Sim::Time - %this.lastZombieDebug >= 0.2) {
+		%this.lastZombieDebug = $Sim::Time;
+
+		%str = "\c6" @ %count SPC "zombies";
+
+		if (%interval != -1) {
+			%time = mCeil(%interval - ($Sim::Time - %this.prevCommon));
+			%str = %str @ "\n\c6Common:" SPC %time @ "s";
+		}
+
+		if ($Sim::Time < %this.nextHorde) {
+			%time = mCeil(%this.nextHorde - $Sim::Time);
+			%str = %str @ "\n\c6Horde:" SPC %time @ "s";
+		}
+
+		commandToAll('BottomPrint', "<font:lucida console:14>" @ %str @ "\n", 1, 2);
+	}
+
+	%this.tick = %this.schedule($DIRECTOR_TICK_RATE, "tick");
+}
+
+function zambDirector::spawnHorde(%this) {
+	if (getRandom() <= 0.3) {
+		%n1 = 2;
+		serverPlay2D(zamb_music_germs_high);
+	}
+	else {
+		%n1 = 1;
+		serverPlay2D(zamb_music_germs_low);
+	}
+
+	for (%i = 0; %i < %n1; %i++) {
+		%n2 = getRandom(5, 10);
+
+		for (%j = 0; %j < %n2; %j++) {
+			%this.schedule(%j * 1000, "spawnZombie", baseZombieData);
+		}
+	}
+}
+
+function zambdirector::spawnCommon(%this) {
+	%this.spawnZombie(baseZombieData);
+	%this.prevCommon = $Sim::Time;
+}
+
+function zambDirector::getHordeSpawnInterval(%this) {
+	return getRandom(60000, 120000) / 1000;
+}
+
+function zambDirector::getCommonSpawnInterval(%this) {
+	%count = %this.getZombieCount();
+	%limit = $ZOMBIE_LIMIT / 2;
+
+	if (%count < %limit) {
+		return 5 + (%count / %limit) * 30;
+	}
+	
+	return -1;
+}
+
+function zambDirector::spawnZombie(%this, %dataBlock, %transform) {
+	if (%this.core.zombies.getCount() >= $ZOMBIE_LIMIT) {
 		return -1;
 	}
 
@@ -33,51 +170,5 @@ function zambDirector::spawn(%this, %dataBlock, %transform) {
 	%this.core.zombies.add(%obj);
 	%obj.setTransform(%transform);
 
-	if (!isEventPending(%this.zombieTick)) {
-		%this.zombieTick = %this.schedule(0, "zombieTick");
-	}
-
 	return %obj;
-}
-
-function zambDirector::zombieTick(%this) {
-	cancel(%this.zombieTick);
-	%count = %this.core.zombies.getCount();
-
-	if (!%count) {
-		return;
-	}
-
-	for (%i = 0; %i < %count; %i++) {
-		%obj = %this.core.zombies.getObject(%i);
-
-		if (%obj.getState() $= "Dead") {
-			%this.core.zombies.remove(%obj);
-
-			%i--;
-			%count--;
-
-			continue;
-		}
-
-		if (%obj.lastZombieTick $= "") {
-			%delta = 0;
-		}
-		else {
-			%delta = $Sim::Time - %obj.lastZombieTick;
-		}
-
-		%obj.lastZombieTick = $Sim::Time;
-		%obj.getDataBlock().zombieTick(%obj, %delta);
-	}
-
-	if ($Sim::Time - %this.lastZombieDebug >= 0.2) {
-		%this.lastZombieDebug = $Sim::Time;
-
-		%str = "\c6" @ %count SPC "zombies";
-
-		commandToAll('BottomPrint', "<font:lucida console:14>" @ %str @ "\n", 1, 2);
-	}
-
-	%this.zombieTick = %this.schedule(100, "zombieTick");
 }

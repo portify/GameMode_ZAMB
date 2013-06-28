@@ -66,6 +66,7 @@ function playerSurvivorArmor::onTrigger(%this, %obj, %slot, %state) {
 			%velocity = vectorAdd(vectorScale(%path, 10), "0 0 6");
 
 			%col.setVelocity(%velocity);
+			%col.addHealth(getRandom(-5, -15));
 			%hitInfected = true;
 		}
 	}
