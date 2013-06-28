@@ -43,7 +43,6 @@ activatePackage("zambPackage");
 exec("./lib/ts-pathing.cs");
 exec("./lib/vizard.cs");
 exec("./lib/nodes.cs");
-exec("./lib/loa.cs");
 
 exec("./src/sounds.cs");
 exec("./src/datablocks.cs");

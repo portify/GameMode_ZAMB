@@ -112,23 +112,18 @@ function baseZombieData::zombifyClientAppearance(%this, %obj, %client) {
 function baseZombieData::zombieTick(%this, %obj, %delta) {
 	%obj.stop();
 	%obj.clearAim();
-	%obj.setMoveX(0);
 
 	%this.updateZombieTarget(%obj);
 
-	if (%obj.target $= "") {
-		return;
+	if (%obj.target !$= "") {
+		%move = %this.directZombieMovement(%obj) || %this.pathedZombieMovement(%obj);
 	}
 
-	%move = %this.directZombieMovement(%obj) || %this.pathedZombieMovement(%obj);
+	%obj.setMoveX(%move ? %this.determineLOA(%obj, 1.75) : 0);
+	%obj.setJumping(%move && %this.determineJump(%obj, 2));
+	%obj.setCrouching(%move && %this.determineCrouch(%obj, 2));
 
-	if (%move) {
-		%obj.updateLOA();
-
-		%this.updateJump(%obj);
-		%this.updateCrouch(%obj);
-	}
-	else {
+	if (!%move) {
 		if (vectorLen(%obj.getVelocity()) < 0.15) {
 			%obj.setActionThread("root");
 		}
@@ -295,20 +290,61 @@ function baseZombieData::pathedZombieMovement(%this, %obj) {
 	return 0;
 }
 
-function baseZombieData::updateJump(%this, %obj) {
-	%obj.setJumping(%obj._zfRay(%this.maxStepHeight, 2));
-}
+function baseZombieData::determineLOA(%this, %obj, %dist) {
+	%a = %obj._loaProbe("0 0 -1", %dist);
+	%b = %obj._loaProbe("0 0 1", %dist);
 
-function baseZombieData::updateCrouch(%this, %obj) {
-	%a = %obj._zfRay(%this.maxStepHeight, 2);
+	if (%a && %b) {
+		if (%obj.loaStuck) {
+			if ($Sim::Time - %obj.loaStuckTime >= 1.5) {
+				%obj.loaStuckDir *= -1;
+				%obj.loaStuckTime = $Sim::Time;
 
-	if (%a) {
-		%b = %obj._zfRay(2.8, 2);
+				return %obj.loaStuckDir;
+			}
+		}
+		else {
+			%obj.loaStuck = 1;
+			%obj.loaStuckDir = getRandom() >= 0.5 ? 1 : -1;
+			%obj.loaStuckTime = $Sim::Time;
 
-		if (%b) {
-			%obj.setCrouching(!%obj._zfRay(1.1, 2));
+			return %obj.loaStuckDir;
 		}
 	}
+	else {
+		%obj.loaStuck = "";
+		%obj.loaStuckDir = "";
+		%obj.loaStuckTime = "";
+
+		return %a + %b * -1; // return %a ? 1 : (%b ? -1 : 0));
+	}
+}
+
+function baseZombieData::determineJump(%this, %obj, %dist) {
+	return %obj._zfRay(%this.maxStepHeight, %dist);
+}
+
+function baseZombieData::determineCrouch(%this, %obj, %dist) {
+	if (%obj._zfRay(%this.maxStepHeight, %dist)) {
+		return 0;
+	}
+
+	%low = 1.2 + 0.1;
+	%high = 2.4 + 0.1;
+
+	%step = 0.2;
+
+	if (%obj._zfRay(%low - %step, %dist)) {
+		return 0;
+	}
+
+	for (%i = %high; %i >= %high; %i -= %step) {
+		if (%obj._zfRay(%i, %dist)) {
+			return 1;
+		}
+	}
+
+	return 0;
 }
 
 function player::_zfRay(%this, %z, %f) {
@@ -320,4 +356,17 @@ function player::_zfRay(%this, %z, %f) {
 
 	%ray = debugContainerRayCast(%start, %end, $TypeMasks::FxBrickObjectType);
 	return %ray !$= 0;
+}
+
+function AIPlayer::_loaProbe(%this, %up, %dist) {
+	%start = %this.getHackPosition();
+	%forward = %this.getForwardVector();
+
+	%cross = vectorCross(%forward, %up);
+	%length = %dist * getWord(%this.getScale(), 2);
+
+	%stop = vectorAdd(%start, vectorScale(%cross, 1));
+	%stop = vectorAdd(%stop, vectorScale(%forward, %length));
+
+	return containerRayCast(%start, %stop, $TypeMasks::All, %this) !$= 0;
 }
