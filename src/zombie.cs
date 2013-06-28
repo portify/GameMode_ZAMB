@@ -43,12 +43,7 @@ function baseZombieData::onAdd(%this, %obj) {
 	%obj.maxYawSpeed = 6;
 	%obj.maxPitchSpeed = 3;
 
-	if (isObject(%obj.client)) {
-		%this.zombifyClientAppearance(%obj, %obj.client);
-	}
-	else {
-		%this.applyZombieAppearance(%obj);
-	}
+	%this.applyZombieAppearance(%obj);
 }
 
 function baseZombieData::onRemove(%this, %obj) {
@@ -58,18 +53,56 @@ function baseZombieData::onRemove(%this, %obj) {
 }
 
 function baseZombieData::applyZombieAppearance(%this, %obj) {
+	%skin = "0.541 0.698 0.552 1";
+
+	%obj.setNodeColor("headSkin", %skin);
 	%obj.setFaceName("asciiTerror");
-	// %obj.setDecalName("HCZombie");
 
-	%obj.setNodeColor("headSkin", "0 0.5 0.25 1");
+	%hat = getRandom(0, 7);
+	%gender = getRandom(0, 1);
 
-	%obj.hideNode("lhand");
-	%obj.hideNode("rhand");
+	%obj.hideNode($Chest[0]);
+	%obj.playThread(1, "armReadyBoth");
 
 	%obj.mountImage(zambClawRight, 0);
 	%obj.mountImage(zambClawLeft, 1);
 
-	%obj.playThread(3, "armReadyBoth");
+	%obj.hideNode("LHand");
+	%obj.hideNode("RHand");
+
+	%obj.hideNode("LHook");
+	%obj.hideNode("RHook");
+
+	if (%hat != 4 && %hat != 6 && %hat != 7) {
+		%hat = 0;
+	}
+
+	for (%i = 0; %i < 7; %i++) {
+		switch (%i) {
+			case 0: %garment = $Hat[%hat];
+			case 1: %garment = $Chest[%gender];
+			case 2: %garment = $LArm[%gender];
+			case 3: %garment = $RArm[%gender];
+			case 4: %garment = "pants";
+			case 5: %garment = "lshoe";
+			case 6: %garment = "rshoe";
+			default: continue;
+		}
+
+		if (%i != 4 && %i != 5 && (%i == 0 || %i == 1 || %i == 6 || getRandom() >= 0.5)) {
+			%r = getRandom(50, 125) / 255;
+			%g = getRandom(50, 125) / 255;
+			%b = getRandom(50, 125) / 255;
+
+			%color = %r SPC %g SPC %b SPC "1";
+		}
+		else {
+			%color = %skin;
+		}
+
+		%obj.unHideNode(%garment);
+		%obj.setNodeColor(%garment, %color);
+	}
 }
 
 function baseZombieData::zombifyClientAppearance(%this, %obj, %client) {
