@@ -120,25 +120,27 @@ function baseZombieData::zombieTick(%this, %obj, %delta) {
 		return;
 	}
 
-	if (!%this.directZombieMovement(%obj)) {
-		if (!%this.pathedZombieMovement(%obj)) {
-			if (vectorLen(%obj.getVelocity()) < 0.15) {
-				%obj.setActionThread("root");
-			}
+	%move = %this.directZombieMovement(%obj) || %this.pathedZombieMovement(%obj);
 
-			if (isObject(%obj.path)) {
-				%obj.path.delete();
-				%obj.path = "";
+	if (%move) {
+		%obj.updateLOA();
 
-				%obj.pathIndex = "";
-				%obj.pathTarget = "";
-			}
+		%this.updateJump(%obj);
+		%this.updateCrouch(%obj);
+	}
+	else {
+		if (vectorLen(%obj.getVelocity()) < 0.15) {
+			%obj.setActionThread("root");
+		}
 
-			return;
+		if (isObject(%obj.path)) {
+			%obj.path.delete();
+			%obj.path = "";
+
+			%obj.pathIndex = "";
+			%obj.pathTarget = "";
 		}
 	}
-
-	%obj.updateLOA();
 }
 
 function baseZombieData::updateZombieTarget(%this, %obj) {
@@ -201,8 +203,8 @@ function baseZombieData::getTargetScore(%this, %obj, %target) {
 
 function baseZombieData::directZombieMovement(%this, %obj) {
 	%ray = containerRayCast(
-		vectorAdd(%obj.position, "0 0" SPC %this.maxStepHeight),
-		vectorAdd(%obj.target.position, "0 0" SPC %this.maxStepHeight),
+		vectorAdd(%obj.getEyePoint()),
+		vectorAdd(%obj.target.getEyePoint()),
 		$TypeMasks::FxBrickObjectType
 	);
 
@@ -291,4 +293,31 @@ function baseZombieData::pathedZombieMovement(%this, %obj) {
 	}
 
 	return 0;
+}
+
+function baseZombieData::updateJump(%this, %obj) {
+	%obj.setJumping(%obj._zfRay(%this.maxStepHeight, 2));
+}
+
+function baseZombieData::updateCrouch(%this, %obj) {
+	%a = %obj._zfRay(%this.maxStepHeight, 2);
+
+	if (%a) {
+		%b = %obj._zfRay(2.8, 2);
+
+		if (%b) {
+			%obj.setCrouching(!%obj._zfRay(1.1, 2));
+		}
+	}
+}
+
+function player::_zfRay(%this, %z, %f) {
+	%scale = getWord(%this.getScale(), 2);
+	%forward = vectorScale(%this.getForwardVector(), %f * %scale);
+
+	%start = vectorAdd(%this.position, "0 0" SPC %z * %scale);
+	%end = vectorAdd(%start, %forward);
+
+	%ray = debugContainerRayCast(%start, %end, $TypeMasks::FxBrickObjectType);
+	return %ray !$= 0;
 }
