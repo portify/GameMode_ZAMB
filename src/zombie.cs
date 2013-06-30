@@ -18,37 +18,6 @@ $skinColorBlueMin = 0.60;
 
 $skinColorSym = "gb";
 
-datablock playerData(baseZombieData : playerStandardArmor) {
-	uiName = "";
-
-	mass = 150;
-	maxDamage = 30;
-	jumpForce = 1332;
-
-	minLookAngle = -1.6;
-	maxLookAngle = 1.6;
-
-	maxForwardSpeed = 10;
-	maxSideSpeed = 10;
-	maxBackwardSpeed = 8;
-
-	maxForwardCrouchSpeed = 6;
-	maxSideCrouchSpeed = 6;
-	maxBackwardCrouchSpeed = 4;
-
-	minImpactSpeed = 24;
-	speedDamageScale = 3.9;
-
-	canJet = false;
-	isZombie = true;
-
-	enableRandomMoveSpeed = true;
-	targetImprovementTolerance = 0.15;
-
-	moveSpeedMin = 0.6;
-	moveSpeedMax = 1;
-};
-
 function baseZombieData::onAdd(%this, %obj) {
 	parent::onAdd(%this, %obj);
 	// %obj.footstepUpdateTick();
@@ -173,6 +142,7 @@ function baseZombieData::zombieTick(%this, %obj, %delta) {
 
 	if (%obj.target !$= "") {
 		%move = %this.directZombieMovement(%obj) || %this.pathedZombieMovement(%obj);
+		%this.zombieAttack(%obj);
 	}
 
 	%obj.setMoveX(%move ? %this.determineLOA(%obj, 1.75) : 0);
@@ -398,6 +368,60 @@ function baseZombieData::determineCrouch(%this, %obj, %dist) {
 	}
 
 	return 0;
+}
+
+function baseZombieData::zombieAttack(%this, %obj) {
+	if ($Sim::Time < %obj.attackReadyTime) {
+		return;
+	}
+
+	%start = %obj.getHackPosition();
+	%eye = %obj.getEyeVector();
+
+	initContainerRadiusSearch(%start, 3, $TypeMasks::PlayerObjectType);
+
+	while (isObject(%col = containerSearchNext())) {
+		if (%col.getDataBlock().isZombie || %col.getState() $= "Dead") {
+			continue;
+		}
+
+		%end = %col.getHackPosition();
+
+		if (vectorDist(%start, %end) >= 3) {
+			continue;
+		}
+
+		%line = vectorNormalize(vectorSub(%col.position, %obj.position));
+
+		if (vectorDot(%eye, %line) >= 0.75) {
+			%ray = containerRayCast(%start, %end, $TypeMasks::FxBrickObjectType);
+
+			if (%ray $= "0") {
+				%hit = true;
+
+				%col.setVelocity("0 0 0.1");
+				%col.schedule(150, "setVelocity", "0 0 0.1");
+
+				%col.damage(%obj, %end, 2, $DamageType::Suicide);
+			}
+		}
+	}
+
+	if (isObject(%obj.getControllingClient()) || %hit) {
+		%obj.attackReadyTime = $Sim::Time + 0.75 + getRandom() * 0.25;
+		%obj.playThread(0, "activate2");
+
+		if (%hit) {
+			%profile = "zamb_infected_claw_flesh" @ getRandom(1, 4);
+		}
+		else {
+			%profile = "zamb_infected_claw_miss" @ getRandom(1, 2);
+		}
+
+		if (isObject(%profile)) {
+			serverPlay3D(%profile, %obj.getHackPosition());
+		}
+	}
 }
 
 function player::_zfRay(%this, %z, %f) {
