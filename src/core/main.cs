@@ -105,7 +105,7 @@ package zambPackage {
 
 		if (!%alive) {
 			%miniGame.sound.play(zamb_music_death, 1, 10);
-			%miniGame.zambEnd("\c6The survivors were overwhelmed.");
+			%miniGame.zambEnd("\c5The survivors were overwhelmed.");
 		}
 	}
 
@@ -260,10 +260,6 @@ function gameConnection::getZAMBAutoCameraTarget(%this) {
 }
 
 function miniGameSO::zambStart(%this, %difficulty) {
-	if ($gameFlowDebug) {
-		warn("MiniGameSO::zambStart");
-	}
-
 	if (%this.owner != 0) {
 		error("ERROR: You cannot start ZAMB on a player-owned mini-game.");
 		return;
@@ -305,10 +301,6 @@ function miniGameSO::zambStart(%this, %difficulty) {
 }
 
 function miniGameSO::zambStop(%this) {
-	if ($gameFlowDebug) {
-		warn("MiniGameSO::zambStop");
-	}
-
 	if (!isObject(%this.zamb)) {
 		error("This mini-game does not have a running ZAMB session.");
 		return;
@@ -320,10 +312,6 @@ function miniGameSO::zambStop(%this) {
 }
 
 function miniGameSO::zambEnd(%this, %message) {
-	if ($gameFlowDebug) {
-		warn("MiniGameSO::zambEnd");
-	}
-
 	if (!isObject(%this.zamb) || %this.zamb.ended) {
 		return;
 	}
@@ -335,3 +323,14 @@ function miniGameSO::zambEnd(%this, %message) {
 		%this.chatMessageAll(%message);
 	}
 }
+
+function miniGameSO::zambWin(%this) {
+	if (!isObject(%this.zamb) || %this.zamb.ended) {
+		return;
+	}
+
+	serverPlay2D(zamb_music_win);
+	%this.zambEnd("\c5The survivors won!");
+}
+
+registerOutputEvent("MiniGameSO", "zambWin");
