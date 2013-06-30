@@ -40,7 +40,7 @@ datablock playerData(baseZombieData : playerStandardArmor) {
 	minLookAngle = -1.6;
 	maxLookAngle = 1.6;
 
-	maxForwardSpeed = 10;
+	maxForwardSpeed = 16;
 	maxSideSpeed = 10;
 	maxBackwardSpeed = 8;
 
@@ -57,6 +57,6 @@ datablock playerData(baseZombieData : playerStandardArmor) {
 	enableRandomMoveSpeed = true;
 	targetImprovementTolerance = 0.15;
 
-	moveSpeedMin = 0.6;
-	moveSpeedMax = 1;
+	moveSpeedMin = 0.25;
+	moveSpeedMax = 0.75;
 };
