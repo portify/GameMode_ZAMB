@@ -1,5 +1,6 @@
 // Add-Ons
 ADDON GameMode_ZAMB
+ADDON Weapon_Package_HK
 
 // Environment
 $EnvGuiServer::SimpleMode 1
