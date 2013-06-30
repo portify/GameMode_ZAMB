@@ -168,7 +168,14 @@ function player::flashlightTick(%this) {
 	%vector = %this.getEyeVector();
 	// %vector = %this.getMuzzleVector(0);
 
-	%end = vectorAdd(%start, vectorScale(%vector, 50));
+	%range = 50;
+	%limit = $EnvGuiServer::VisibleDistance / 2;
+
+	if (%range > %limit) {
+		%range = %limit;
+	}
+
+	%end = vectorAdd(%start, vectorScale(%vector, %range));
 	%end = vectorAdd(%end, %this.getVelocity());
 	%ray = containerRayCast(%start, %end, $TypeMasks::All, %this);
 
@@ -195,5 +202,38 @@ function player::flashlightTick(%this) {
 	%this.light.setTransform(%pos);
 	%this.light.inspectPostApply();
 
-	%this.flashlightTick = %this.schedule(250, "flashlightTick");
+	%this.flashlightTick = %this.schedule(32, "flashlightTick");
+}
+
+function gameConnection::updateZAMBVignette(%this) {
+	cancel(%this.updateZAMBVignette);
+
+	%r = 0;
+	%g = 0;
+	%b = 0;
+	%a = 1;
+
+	%player = %this.player;
+
+	if (isObject(%player) && %player.getState() !$= "Dead") {
+		%damage = %player.getDamageLevel() / %player.getDataBlock().maxDamage;
+		%boomer = $Sim::Time - %player.lastBoomerVictimTime;
+
+		if (%damage > 0) {
+			%r += %player.getDamageLevel() / %player.getDataBlock().maxDamage;
+		}
+
+		if (%boomer < 15) {
+			%g += %boomer <= 10 ? 1 : 1 - (%boomer - 10) / 5;
+
+			if (%boomer < 10) {
+				%this.updateZAMBVignette = %this.schedule((10 - %boomer) * 1000, "updateZAMBVignette");
+			}
+			else {
+				%this.updateZAMBVignette = %this.schedule(100, "updateZAMBVignette");
+			}
+		}
+	}
+
+	commandToClient(%this, 'SetVignette', 1, %r SPC %g SPC %b SPC %a);
 }

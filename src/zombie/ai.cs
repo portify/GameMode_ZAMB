@@ -77,7 +77,14 @@ function baseZombieData::isValidTarget(%this, %obj, %target) {
 }
 
 function baseZombieData::getTargetScore(%this, %obj, %target) {
-	%sum = 0;
+	%boomer = $Sim::Time - %obj.lastBoomerVictimTime;
+
+	if ($Sim::Time - %obj.lastBoomerVictimTime < 15) {
+		%sum = 5;
+	}
+	else {
+		%sum = 0;
+	}
 
 	%sum += 1 - (vectorDist(%obj.position, %target.position) / 50);
 	%sum += %target.getDamageLevel() / %target.getDataBlock().maxDamage;

@@ -30,7 +30,7 @@ function tankZombieData::onAdd(%this, %obj) {
 
 function tankZombieData::applyZombieAppearance(%this, %obj) {
 	baseZombieData::applyZombieAppearance(%this, %obj);
-	%obj.setScale("1.3 1.6 1.6");
+	%obj.setScale("1.3 1.45 1.45");
 }
 
 function tankZombieData::onRemove(%this, %obj) {

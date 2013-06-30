@@ -41,7 +41,7 @@ function ZAMB::tick(%this) {
 
 	if ($Sim::Time - %this.lastDebugTime >= 0.2) {
 		%this.lastDebugTime = $Sim::Time;
-		%this.tickDebug();
+		// %this.tickDebug();
 	}
 
 	%this.tick = %this.schedule(100, "tick");
@@ -54,7 +54,6 @@ function ZAMB::tickZombieSpawn(%this) {
 
 	if (%this.nextHorde <= $Sim::Time) {
 		%this.spawnHorde();
-		%this.nextHorde = $Sim::Time + %this.getHordeSpawnInterval();
 	}
 
 	%interval = %this.getCommonSpawnInterval();
@@ -119,14 +118,21 @@ function ZAMB::tickDebug(%this) {
 	commandToAll('BottomPrint', "<font:lucida console:14>" @ %str @ "\n", 1, 2);
 }
 
-function ZAMB::spawnHorde(%this) {
+function ZAMB::spawnHorde(%this, %noSound) {
 	if (getRandom() <= 0.4) {
 		%n1 = 2;
-		serverPlay2D(zamb_music_germs_high);
 	}
 	else {
 		%n1 = 1;
-		serverPlay2D(zamb_music_germs_low);
+	}
+
+	if (!%noSound) {
+		if (%n1 == 1) {
+			serverPlay2D(zamb_music_germs_low);
+		}
+		else if (%n1 == 2) {
+			serverPlay2D(zamb_music_germs_high);
+		}
 	}
 
 	for (%i = 0; %i < %n1; %i++) {
@@ -136,6 +142,9 @@ function ZAMB::spawnHorde(%this) {
 			%this.schedule(%j * 1000, "spawnZombie", baseZombieData);
 		}
 	}
+
+	%this.lastHorde = $Sim::Time;
+	%this.nextHorde = $Sim::Time + %this.getHordeSpawnInterval();
 }
 
 function ZAMB::spawnCommon(%this) {

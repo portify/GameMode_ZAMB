@@ -2,6 +2,36 @@
 ADDON GameMode_ZAMB
 ADDON Weapon_Package_HK
 
+ADDON Emote_Alarm
+ADDON Emote_Confusion
+ADDON Emote_Hate
+ADDON Emote_Love
+
+ADDON Print_1x2f_BLPRemote
+ADDON Print_1x2f_Default
+ADDON Print_2x2f_Default
+ADDON Print_2x2r_Default
+ADDON Print_2x2r_Monitor3
+ADDON Print_Letters_Default
+
+// Build
+ADDON Sound_Beeps
+ADDON Projectile_Radio_Wave
+ADDON Light_Basic
+ADDON Light_Eksi
+ADDON Particle_Basic
+ADDON Particle_Player
+ADDON Vehicle_Jeep
+ADDON Support_Doors
+ADDON Brick_Arch
+ADDON Brick_DemiansBB
+ADDON Brick_DemiansBB3
+ADDON Brick_Doors
+ADDON Brick_Large_Cubes
+
+// Music
+MUSIC NoMercyForYou
+
 // Environment
 $EnvGuiServer::SimpleMode 1
 $EnvGuiServer::SkyFile Add-Ons/Sky_Skylands/Skylands.dml
@@ -38,5 +68,5 @@ $MiniGame::EnablePainting 0
 $MiniGame::PlayerDataBlockName Survivor Player
 
 $MiniGame::StartEquipName0 HK: AK-103
-$MiniGame::StartEquipName1 HK: USP .45
+$MiniGame::StartEquipName1 HK: USP.45
 $MiniGame::StartEquipName2 0

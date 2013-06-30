@@ -259,12 +259,27 @@ datablock audioDescription(audioQuiet3D : audioDefault3D) {
 	volume = 0.5;
 };
 
+datablock audioDescription(audioVeryQuiet3D : audioDefault3D) {
+	volume = 0.25;
+};
+
 zambRegisterSound(zamb_music_death, "music/death");
 zambRegisterSound(zamb_music_germs_low, "music/germs_low");
 zambRegisterSound(zamb_music_germs_high, "music/germs_high");
 zambRegisterSound(zamb_music_pukricide, "music/pukricide");
 zambRegisterSound(zamb_music_tank, "music/tank");
 zambRegisterSound(zamb_music_win, "music/win");
+
+zambRegisterSound(zamb_music_bacteria_boomer, "music/bacteria/boomer");
+zambRegisterSound(zamb_music_bacteria_boomer_multiple, "music/bacteria/boomer_multiple");
+
+//zambRegisterSound(zamb_music_zombiechoir1, "music/zombiechoir/hit1");
+//zambRegisterSound(zamb_music_zombiechoir2, "music/zombiechoir/hit2");
+//zambRegisterSound(zamb_music_zombiechoir3, "music/zombiechoir/hit3");
+//zambRegisterSound(zamb_music_zombiechoir4, "music/zombiechoir/hit4");
+//zambRegisterSound(zamb_music_zombiechoir5, "music/zombiechoir/hit5");
+//zambRegisterSound(zamb_music_zombiechoir6, "music/zombiechoir/hit6");
+//zambRegisterSound(zamb_music_zombiechoir7, "music/zombiechoir/hit7");
 
 zambRegisterSound(zamb_survivor_flashlight, "survivor/flashlight");
 zambRegisterSound(zamb_survivor_jumplanding, "survivor/jumplanding");
@@ -280,5 +295,12 @@ zambRegisterSound(zamb_infected_claw_flesh1, "infected/claw_flesh1", audioQuiet3
 zambRegisterSound(zamb_infected_claw_flesh2, "infected/claw_flesh2", audioQuiet3D);
 zambRegisterSound(zamb_infected_claw_flesh3, "infected/claw_flesh3", audioQuiet3D);
 zambRegisterSound(zamb_infected_claw_flesh4, "infected/claw_flesh4", audioQuiet3D);
+
+zambRegisterSound(zamb_boomer_explode1, "infected/boomer/explode1");
+zambRegisterSound(zamb_boomer_explode2, "infected/boomer/explode2");
+zambRegisterSound(zamb_boomer_explode3, "infected/boomer/explode3");
+zambRegisterSound(zamb_boomer_vomit1, "infected/boomer/vomit1");
+zambRegisterSound(zamb_boomer_vomit2, "infected/boomer/vomit2");
+zambRegisterSound(zamb_boomer_vomit3, "infected/boomer/vomit3");
 
 zambLoadFootsteps();

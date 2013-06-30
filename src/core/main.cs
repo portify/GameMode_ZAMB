@@ -104,7 +104,7 @@ package zambPackage {
 		}
 
 		if (!%alive) {
-			%miniGame.sound.play(zamb_music_death, 1, 10);
+			serverPlay2D(zamb_music_death);
 			%miniGame.zambEnd("\c5The survivors were overwhelmed.");
 		}
 	}
@@ -320,7 +320,7 @@ function miniGameSO::zambEnd(%this, %message) {
 	%this.schedule(10000, "reset", 0);
 
 	if (%message !$= "") {
-		%this.chatMessageAll(%message);
+		messageAll('', %message);
 	}
 }
 
