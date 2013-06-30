@@ -1,139 +1,3 @@
-// $skinColorRedMin = 0;
-// $skinColorRedMax = 0;
-
-$skinColorRedMin = 0.1;
-$skinColorRedMax = 0.6;
-
-// $skinColorGreenMin = 0.150;
-// $skinColorGreenMax = 0.450;
-
-$skinColorGreenMin = 0.15;
-$skinColorGreenMax = 0.75;
-
-// $skinColorBlueMin = 0.150;
-// $skinColorBlueMax = 0.450;
-
-$skinColorBlueMin = 0.15;
-$skinColorBlueMin = 0.60;
-
-$skinColorSym = "gb";
-
-function baseZombieData::onAdd(%this, %obj) {
-	parent::onAdd(%this, %obj);
-	// %obj.footstepUpdateTick();
-
-	if (%this.enableRandomMoveSpeed && %obj.getClassName() $= "AIPlayer") {
-		%obj.setMoveSpeed(%this.moveSpeedMin + getRandom() * (%this.moveSpeedMax - %this.moveSpeedMin));
-	}
-
-	%obj.setMoveTolerance(1.78);
-	%obj.setMoveSlowdown(0);
-
-	%obj.maxYawSpeed = 6;
-	%obj.maxPitchSpeed = 3;
-
-	%obj.setActionThread("root");
-	%this.applyZombieAppearance(%obj);
-}
-
-function baseZombieData::onRemove(%this, %obj) {
-	if (isObject(%obj.path)) {
-		%obj.path.delete();
-	}
-}
-
-function baseZombieData::applyZombieAppearance(%this, %obj) {
-	// %skin = "0.541 0.698 0.552 1";
-	%skin = getZombieSkinColor();
-
-	%obj.setNodeColor("headSkin", %skin);
-	%obj.setNodeColor("lhand", %skin);
-	%obj.setNodeColor("rhand", %skin);
-
-	%obj.setFaceName("asciiTerror");
-
-	%hat = getRandom(0, 7);
-	%gender = getRandom(0, 1);
-
-	%obj.hideNode($Chest[0]);
-	%obj.playThread(1, "armReadyBoth");
-
-	if (%hat != 4 && %hat != 6 && %hat != 7) {
-		%hat = 0;
-	}
-
-	for (%i = 0; %i < 7; %i++) {
-		switch (%i) {
-			case 0: %garment = $Hat[%hat];
-			case 1: %garment = $Chest[%gender];
-			case 2: %garment = $LArm[%gender];
-			case 3: %garment = $RArm[%gender];
-			case 4: %garment = "pants";
-			case 5: %garment = "lshoe";
-			case 6: %garment = "rshoe";
-		}
-
-		if (%garment $= "" || %garment $= "none") {
-			continue;
-		}
-
-		if (%i == 0 || %i == 1 || %i == 4 || %i == 6 || getRandom() >= 0.5) {
-			%r = getRandom(50, 125) / 255;
-			%g = getRandom(50, 125) / 255;
-			%b = getRandom(50, 125) / 255;
-
-			%color = %r SPC %g SPC %b SPC "1";
-		}
-		else {
-			%color = %skin;
-		}
-
-		%obj.unHideNode(%garment);
-		%obj.setNodeColor(%garment, %color);
-	}
-}
-
-function getZombieSkinColor()
-{
-	%redMin = $skinColorRedMin * 100;
-	%redMax = $skinColorRedMax * 100;
-	%greenMin = $skinColorGreenMin * 100;
-	%greenMax = $skinColorGreenMax * 100;
-	%blueMin = $skinColorblueMin * 100;
-	%blueMax = $skinColorblueMax * 100;
-	
-	%red = getRandom(%redMin, %redMax) / 100;
-	%blue = getRandom(%blueMin, %blueMax) / 100;
-	%green = getRandom(%greenMin, %greenMax) / 100;
-
-	if ($skinColorSym !$= "") {
-		switch$ ($skinColorSym) {
-			case "rg":
-				%sym = (%red + %green) / 2;
-				%red = %sym;
-				%green = %sym;
-			
-			case "rb":
-				%sym = (%red + %blue) / 2;
-				%red = %sym;
-				%blue = %sym;
-
-			case "gb":
-				%sym = (%green + %blue) / 2;
-				%green = %sym;
-				%blue = %sym;
-
-			case "rgb":
-				%sym = (%red + %green + %blue) / 3;
-				%red = %sym;
-				%green = %sym;
-				%blue = %sym;
-		}
-	}
-
-	return %red SPC %green SPC %blue SPC 1;
-}
-
 function baseZombieData::zombieTick(%this, %obj, %delta) {
 	%obj.stop();
 	%obj.clearAim();
@@ -143,6 +7,8 @@ function baseZombieData::zombieTick(%this, %obj, %delta) {
 	if (%obj.target !$= "") {
 		%move = %this.directZombieMovement(%obj) || %this.pathedZombieMovement(%obj);
 		%this.zombieAttack(%obj);
+
+		// %obj.setLine(%obj.getHackPosition(), %obj.target.getHackPosition());
 	}
 
 	%obj.setMoveX(%move ? %this.determineLOA(%obj, 1.75) : 0);
@@ -260,35 +126,45 @@ function baseZombieData::pathedZombieMovement(%this, %obj) {
 		return 0;
 	}
 
-	%b = NodeGroup.findNearest(%obj.target.position, 16, 1);
+	if ($Sim::Time - %obj.lastNode > 0.5) {
+		%obj.node = NodeGroup.findNearest(%obj.position, 16, 1);
+		%obj.lastNode = $Sim::Time;
+	}
 
-	if (!isObject(%b)) {
+	if (!isObject(%obj.node)) {
 		return 0;
 	}
 
-	%a = NodeGroup.findNearest(%obj.position, 16, 1);
+	if ($Sim::Time - %obj.target.lastNode > 0.5) {
+		%obj.target.node = NodeGroup.findNearest(%obj.target.position, 16, 1);
+		%obj.target.lastNode = $Sim::Time;
+	}
 
-	if (!isObject(%a)) {
+	if ( !isObject(%obj.target.node)) {
 		return false;
 	}
 
-	if (%obj.path.b != %b) {
+	if (%obj.path.b !$= %obj.target.node) {
 		if (isObject(%obj.path)) {
 			%obj.path.delete();
 		}
 
-		%obj.path = findPath(%a, %b);
+		%obj.path = findPath(%obj.node, %obj.target.node);
 
 		%obj.pathIndex = 0;
 		%obj.pathTarget = "";
 	}
 
-	if (!%obj.path.done || %obj.path.result $= "error") {
-		return 0;
+	if (!%obj.path.done) {
+		return -1;
 	}
 
-	if (%obj.pathIndex >= getWordCount(%obj.path.result)) {
-		return 0;
+	if ( %obj.path.result $= "error" ) {
+		return false;
+	}
+
+	if ( %obj.index >= %length = getWordCount( %obj.path.result ) ) {
+		return false;
 	}
 
 	%lookAhead = 5;
@@ -310,7 +186,13 @@ function baseZombieData::pathedZombieMovement(%this, %obj) {
 		}
 	}
 
-	return 0;
+	%i = %obj.pathIndex;
+	%node = getWord(%obj.path.result, %i);
+
+	%obj.pathTarget = %i + 1;
+	%obj.setMoveDestination(%node.position);
+
+	return 1;
 }
 
 function baseZombieData::determineLOA(%this, %obj, %dist) {
@@ -368,60 +250,6 @@ function baseZombieData::determineCrouch(%this, %obj, %dist) {
 	}
 
 	return 0;
-}
-
-function baseZombieData::zombieAttack(%this, %obj) {
-	if ($Sim::Time < %obj.attackReadyTime) {
-		return;
-	}
-
-	%start = %obj.getHackPosition();
-	%eye = %obj.getEyeVector();
-
-	initContainerRadiusSearch(%start, 3, $TypeMasks::PlayerObjectType);
-
-	while (isObject(%col = containerSearchNext())) {
-		if (%col.getDataBlock().isZombie || %col.getState() $= "Dead") {
-			continue;
-		}
-
-		%end = %col.getHackPosition();
-
-		if (vectorDist(%start, %end) >= 3) {
-			continue;
-		}
-
-		%line = vectorNormalize(vectorSub(%col.position, %obj.position));
-
-		if (vectorDot(%eye, %line) >= 0.75) {
-			%ray = containerRayCast(%start, %end, $TypeMasks::FxBrickObjectType);
-
-			if (%ray $= "0") {
-				%hit = true;
-
-				%col.setVelocity("0 0 0.1");
-				%col.schedule(150, "setVelocity", "0 0 0.1");
-
-				%col.damage(%obj, %end, 2, $DamageType::Suicide);
-			}
-		}
-	}
-
-	if (isObject(%obj.getControllingClient()) || %hit) {
-		%obj.attackReadyTime = $Sim::Time + 0.75 + getRandom() * 0.25;
-		%obj.playThread(0, "activate2");
-
-		if (%hit) {
-			%profile = "zamb_infected_claw_flesh" @ getRandom(1, 4);
-		}
-		else {
-			%profile = "zamb_infected_claw_miss" @ getRandom(1, 2);
-		}
-
-		if (isObject(%profile)) {
-			serverPlay3D(%profile, %obj.getHackPosition());
-		}
-	}
 }
 
 function player::_zfRay(%this, %z, %f) {

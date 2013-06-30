@@ -11,11 +11,12 @@ exec("./lib/vizard.cs");
 exec("./lib/nodes.cs");
 
 exec("./src/datablocks.cs");
+exec("./src/survivor.cs");
 exec("./src/sound.cs");
 
-exec("./src/main.cs");
-exec("./src/soundController.cs");
+exec("./src/core/main.cs");
+exec("./src/zombie/main.cs");
 
-exec("./src/zombie.cs");
-exec("./src/survivor.cs");
-exec("./src/tank.cs");
+if (isFile("Add-Ons/GameMode_ZAMB/save.nav")) {
+	loadNodes("Add-Ons/GameMode_ZAMB/save.nav");
+}

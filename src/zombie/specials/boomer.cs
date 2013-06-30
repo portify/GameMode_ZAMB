@@ -1,11 +1,11 @@
 datablock playerData(tankZombieData : baseZombieData) {
 	mass = 300;
-	maxDamage = 4000;
+	maxDamage = 3000;
 
 	runForce = 3000;
 	jumpForce = 2000;
 
-	maxForwardSpeed = 35; // 5
+	maxForwardSpeed = 5;
 	maxBackwardSpeed = 4;
 	maxSideSpeed = 2;
 

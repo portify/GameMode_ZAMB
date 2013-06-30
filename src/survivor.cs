@@ -81,17 +81,21 @@ function playerSurvivorArmor::onTrigger(%this, %obj, %slot, %state) {
 	}
 }
 
-function playerSurvivorArmor::onDisabled(%this, %obj) {
-	%miniGame = getMiniGameFromObject(%obj);
+function playerSurvivorArmor::damage(%this, %obj, %src, %origin, %damage, %type) {
+	if (isObject(%src) && %src != %obj && %src.getDataBlock().isSurvivor) {
+		%difficulty = $defaultMiniGame.zamb.difficulty;
 
-	if (%miniGame $= $defaultMiniGame && isObject(%obj.client)) {
-		if ($Sim::Time - %obj.lastDeathMusic >= 7.5) {
-			%obj.client.play2D(zamb_music_death);
-			%obj.lastDeathMusic = $Sim::Time;
+		switch (%difficulty) {
+			case 0: %mod = 0;
+			case 1: %mod = 0.1;
+			case 2: %mod = 0.5;
+			case 3: %mod = 1;
 		}
+
+		%damage *= %mod;
 	}
 
-	parent::onDisabled(%this, %obj);
+	parent::damage(%this, %obj, %src, %origin, %damage, %type);
 }
 
 datablock fxLightData(playerFlashlightData : playerLight) {
@@ -191,5 +195,5 @@ function player::flashlightTick(%this) {
 	%this.light.setTransform(%pos);
 	%this.light.inspectPostApply();
 
-	%this.flashlightTick = %this.schedule(16, "flashlightTick");
+	%this.flashlightTick = %this.schedule(250, "flashlightTick");
 }

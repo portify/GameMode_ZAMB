@@ -262,7 +262,7 @@ datablock audioDescription(audioQuiet3D : audioDefault3D) {
 zambRegisterSound(zamb_music_death, "music/death");
 zambRegisterSound(zamb_music_germs_low, "music/germs_low");
 zambRegisterSound(zamb_music_germs_high, "music/germs_high");
-zambRegisterSound(zamb_music_tank, "music/pukricide");
+zambRegisterSound(zamb_music_pukricide, "music/pukricide");
 zambRegisterSound(zamb_music_tank, "music/tank");
 zambRegisterSound(zamb_music_win, "music/win");
 
