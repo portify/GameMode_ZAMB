@@ -1,35 +1,3 @@
-datablock playerData(playerSurvivorArmor : playerStandardArmor) {
-	uiName = "Survivor Player";
-	maxTools = 3;
-
-	canJet = false;
-	isSurvivor = true;
-
-	firstPersonOnly = true;
-	thirdPersonOnly = false;
-
-	mass = 150;
-	runForce = 4800;
-	airControl = 0.025;
-
-	jumpForce = 1332;
-	jumpDelay = 15;
-
-	minLookAngle = -1.4;
-	maxLookAngle = 1.4;
-
-	maxForwardSpeed = 9;
-	maxBackwardSpeed = 6;
-	maxSideSpeed = 7;
-	
-	maxForwardCrouchSpeed = 4;
-	maxBackwardCrouchSpeed = 3;
-	maxSideCrouchSpeed = 3;
-
-	runSurfaceAngle = 55;
-	jumpSurfaceAngle = 55;
-};
-
 function playerSurvivorArmor::onAdd(%this, %obj) {
 	parent::onAdd(%this, %obj);
 	%obj.footstepUpdateTick();
@@ -44,29 +12,40 @@ function playerSurvivorArmor::onTrigger(%this, %obj, %slot, %state) {
 	}
 
 	%obj.lastShove = $Sim::Time;
-	%obj.playThread(2, "activate2");
+	%obj.playThread(3, "shiftUp");
 
-	initContainerRadiusSearch(%obj.getHackPosition(), 4, $TypeMasks::PlayerObjectType);
+	%start = %obj.getHackPosition();
 	%eye = %obj.getEyeVector();
 
+	initContainerRadiusSearch(%obj.getHackPosition(), 4, $TypeMasks::PlayerObjectType);
+	%miniGame = getMiniGameFromObject(%obj);
+
 	while (isObject(%col = containerSearchNext())) {
-		if (getMiniGameFromObject(%col) !$= $defaultMiniGame) {
+		if (getMiniGameFromObject(%col) != %miniGame) {
 			continue;
 		}
 
-		%line = vectorNormalize(vectorSub(%col.position, %obj.position));
+		%end = %col.getHackPosition();
+
+		if (vectorDist(%start, %end) >= 4) {
+			continue;
+		}
+
+		%line = vectorNormalize(vectorSub(%end, %start));
 
 		if (vectorDot(%eye, %line) >= 0.75) {
+			if (%col.getDataBlock().noZombiePush) {
+				continue;
+			}
+
 			if (!%col.getDataBlock().isZombie) {
 				%hitSurvivor = true;
 				continue;
 			}
 
-			%path = vectorNormalize(vectorSub(%col.position, %obj.position));
-			%velocity = vectorAdd(vectorScale(%path, 10), "0 0 6");
+			%col.setVelocity(vectorAdd(vectorScale(%line, 10), "0 0 6"));
+			%col.damage(%obj, %end, getRandom(-5, -15), $DamageType::Suicide);
 
-			%col.setVelocity(%velocity);
-			%col.addHealth(getRandom(-5, -15));
 			%hitInfected = true;
 		}
 	}
@@ -93,6 +72,10 @@ function playerSurvivorArmor::onTrigger(%this, %obj, %slot, %state) {
 		}
 	}
 
+	if (%profile !$= "zamb_survivor_swing_miss") {
+		%obj.playThread(2, "plant");
+	}
+
 	if (isObject(%profile)) {
 		serverPlay3D(%profile, %obj.getHackPosition());
 	}
@@ -115,21 +98,26 @@ datablock fxLightData(playerFlashlightData : playerLight) {
 	uiName = "";
 	flareOn = 0;
 
-	radius = 10;
+	radius = 16; // 10
 	brightness = 3;
 };
 
 package zambSurvivorPackage {
 	function serverCmdLight(%client) {
-		if (%client.miniGame !$= $defaultMiniGame) {
+		%player = %client.player;
+
+		if (!isObject(%player) || %player.getState() $= "Dead") {
 			parent::serverCmdLight(%client);
 			return;
 		}
 
-		%player = %client.player;
+		%dataBlock = %player.getDataBlock();
 
-		if (!isObject(%player)) {
-			parent::serverCmdLight(%client);
+		if (%dataBlock != nameToID("playerSurvivorArmor")) {
+			if (%dataBlock.isZombie) {
+				parent::serverCmdLight(%client);
+			}
+
 			return;
 		}
 
@@ -160,42 +148,6 @@ package zambSurvivorPackage {
 			}
 		}
 	}
-
-	function player::activateStuff(%this) {
-		%miniGame = getMiniGameFromObject(%this);
-
-		if (%miniGame !$= $defaultMiniGame) {
-			parent::activateStuff(%this);
-			return;
-		}
-
-		if ($Sim::Time - %this.lastUseTime < 0.1) {
-			return;
-		}
-
-		%this.lastUseTime = $Sim::Time;
-
-		%start = %this.getEyePoint();
-		%vector = %this.getEyeVector();
-
-		%distance = 5;
-
-		%ray = containerRayCast(%start,
-			vectorAdd(%start, vectorScale(%vector, %distance)),
-			$TypeMasks::All, %this
-		);
-
-		%col = firstWord(%ray);
-		%use = isObject(%col);
-
-		if (%use) {
-			%use = %this.useObject(%col);
-		}
-
-		if (!%use && isObject(%this.client)) {
-			%this.client.play2D(zamb_cannot_use);
-		}
-	}
 };
 
 activatePackage("zambSurvivorPackage");
@@ -207,10 +159,13 @@ function player::flashlightTick(%this) {
 		return;
 	}
 
-	%start = %this.getEyePoint();
+	// %start = %this.getEyePoint();
+	%start = %this.getMuzzlePoint(0);
 	%vector = %this.getEyeVector();
+	// %vector = %this.getMuzzleVector(0);
 
 	%end = vectorAdd(%start, vectorScale(%vector, 50));
+	%end = vectorAdd(%end, %this.getVelocity());
 	%ray = containerRayCast(%start, %end, $TypeMasks::All, %this);
 
 	if (%ray $= "0") {
@@ -220,14 +175,21 @@ function player::flashlightTick(%this) {
 		%pos = vectorSub(getWords(%ray, 1, 3), %vector);
 	}
 
-	if (vectorDist(%pos, %this.light.position) >= 0.05) {
-		%this.light.setTransform(%pos);
-		%this.light.inspectPostApply();
+	%path = vectorSub(%pos, %this.light.position);
+	%length = vectorLen(%path);
+
+	%speed = 0.35;
+
+	if (%length < %speed) {
+		%pos = %pos;
+	}
+	else {
+		%moved = vectorScale(%path, %speed);
+		%pos = vectorAdd(%this.light.position, %moved);
 	}
 
-	%this.flashlightTick = %this.schedule(32, "flashlightTick");
-}
+	%this.light.setTransform(%pos);
+	%this.light.inspectPostApply();
 
-function player::useObject(%this, %obj) {
-	return false;
+	%this.flashlightTick = %this.schedule(16, "flashlightTick");
 }
