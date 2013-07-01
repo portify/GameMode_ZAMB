@@ -273,13 +273,13 @@ zambRegisterSound(zamb_music_win, "music/win");
 zambRegisterSound(zamb_music_bacteria_boomer, "music/bacteria/boomer");
 zambRegisterSound(zamb_music_bacteria_boomer_multiple, "music/bacteria/boomer_multiple");
 
-//zambRegisterSound(zamb_music_zombiechoir1, "music/zombiechoir/hit1");
-//zambRegisterSound(zamb_music_zombiechoir2, "music/zombiechoir/hit2");
-//zambRegisterSound(zamb_music_zombiechoir3, "music/zombiechoir/hit3");
-//zambRegisterSound(zamb_music_zombiechoir4, "music/zombiechoir/hit4");
-//zambRegisterSound(zamb_music_zombiechoir5, "music/zombiechoir/hit5");
-//zambRegisterSound(zamb_music_zombiechoir6, "music/zombiechoir/hit6");
-//zambRegisterSound(zamb_music_zombiechoir7, "music/zombiechoir/hit7");
+zambRegisterSound(zamb_music_zombiechoir1, "music/zombiechoir/hit1");
+zambRegisterSound(zamb_music_zombiechoir2, "music/zombiechoir/hit2");
+zambRegisterSound(zamb_music_zombiechoir3, "music/zombiechoir/hit3");
+zambRegisterSound(zamb_music_zombiechoir4, "music/zombiechoir/hit4");
+zambRegisterSound(zamb_music_zombiechoir5, "music/zombiechoir/hit5");
+zambRegisterSound(zamb_music_zombiechoir6, "music/zombiechoir/hit6");
+zambRegisterSound(zamb_music_zombiechoir7, "music/zombiechoir/hit7");
 
 zambRegisterSound(zamb_survivor_flashlight, "survivor/flashlight");
 zambRegisterSound(zamb_survivor_jumplanding, "survivor/jumplanding");

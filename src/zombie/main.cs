@@ -51,6 +51,15 @@ function baseZombieData::zombieAttack(%this, %obj) {
 
 	initContainerRadiusSearch(%start, 3, $TypeMasks::PlayerObjectType);
 
+	%difficulty = getZAMBDifficulty();
+
+	switch (%difficulty) {
+		case 0: %damage = 1;
+		case 1: %damage = 2;
+		case 2: %damage = 5;
+		case 3: %damage = 20;
+	}
+
 	while (isObject(%col = containerSearchNext())) {
 		if (%col.getDataBlock().isZombie || %col.getState() $= "Dead") {
 			continue;
@@ -73,7 +82,15 @@ function baseZombieData::zombieAttack(%this, %obj) {
 				%col.setVelocity("0 0 0.1");
 				%col.schedule(150, "setVelocity", "0 0 0.1");
 
-				%col.damage(%obj, %end, 2, $DamageType::Suicide);
+				%eye2 = %col.getEyeVector();
+				%line2 = vectorNormalize(vectorSub(%col.position, %obj.position));
+
+				if (vectorDot(%eye2, %line2) >= 0) {
+					%col.damage(%obj, %end, %damage, $DamageType::Suicide);
+				}
+				else {
+					%col.damage(%obj, %end, %damage / 2, $DamageType::Suicide);
+				}
 			}
 		}
 	}

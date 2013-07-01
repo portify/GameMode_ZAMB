@@ -83,7 +83,7 @@ function playerSurvivorArmor::onTrigger(%this, %obj, %slot, %state) {
 
 function playerSurvivorArmor::damage(%this, %obj, %src, %origin, %damage, %type) {
 	if (isObject(%src) && %src != %obj && %src.getDataBlock().isSurvivor) {
-		%difficulty = $defaultMiniGame.zamb.difficulty;
+		%difficulty = getZAMBDifficulty(%this);
 
 		switch (%difficulty) {
 			case 0: %mod = 0;

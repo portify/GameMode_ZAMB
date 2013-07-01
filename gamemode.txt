@@ -15,6 +15,7 @@ ADDON Print_2x2r_Monitor3
 ADDON Print_Letters_Default
 
 // Build
+ADDON Sound_UndergroundAMB
 ADDON Sound_Beeps
 ADDON Projectile_Radio_Wave
 ADDON Light_Basic

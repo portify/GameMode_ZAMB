@@ -34,7 +34,7 @@ datablock playerData(baseZombieData : playerStandardArmor) {
 	uiName = "";
 
 	mass = 150;
-	maxDamage = 30;
+	maxDamage = 50;
 	jumpForce = 1332;
 
 	minLookAngle = -1.6;

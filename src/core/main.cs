@@ -1,5 +1,6 @@
 exec("./zamb.cs");
 exec("./sound.cs");
+exec("./spawn.cs");
 
 package zambPackage {
 	function miniGameSO::onRemove(%this) {
@@ -279,7 +280,12 @@ function miniGameSO::zambStart(%this, %difficulty) {
 	}
 
 	if (%difficulty $= "") {
-		%difficulty = 1;
+		if ($Pref::Server::ZAMBDifficulty $= "") {
+			%difficulty = 1;
+		}
+		else {
+			%difficulty = $Pref::Server::ZAMBDifficulty;
+		}
 	}
 
 	%this.zamb = new ScriptObject() {
@@ -291,6 +297,9 @@ function miniGameSO::zambStart(%this, %difficulty) {
 	%this.sound = new ScriptGroup() {
 		class = zambSoundController;
 		miniGame = %this;
+
+		wind = 2;
+		windHits = 1;
 	};
 
 	%this.zombies = new SimGroup() {

@@ -93,6 +93,10 @@ function boomerZombieData::determineCrouch(%this, %obj, %dist) {
 	return baseZombieData::determineCrouch(%this, %obj, %dist);
 }
 
+function boomerZombieData::zombieAttack(%this, %obj) {
+	baseZombieData::zombieAttack(%this, %obj);
+}
+
 function player::applyBoomerVomit(%this) {
 	if (!%this.isBoomerVictim()) {
 		%this.lastBoomerVictimTime = $Sim::Time;

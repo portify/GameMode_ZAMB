@@ -13,7 +13,7 @@ function ZAMB::onAdd(%this) {
 	%this.ended = 0;
 	%this.index = 0;
 
-	%this.quota = 5;
+	%this.quota = 10;
 	%this.limit = 40;
 
 	%this.tick = %this.scheduleNoQuota(0, "tick");
@@ -41,7 +41,7 @@ function ZAMB::tick(%this) {
 
 	if ($Sim::Time - %this.lastDebugTime >= 0.2) {
 		%this.lastDebugTime = $Sim::Time;
-		// %this.tickDebug();
+		%this.tickDebug();
 	}
 
 	%this.tick = %this.schedule(100, "tick");
@@ -62,6 +62,16 @@ function ZAMB::tickZombieSpawn(%this) {
 		%this.spawnCommon();
 		%this.prevCommon = $Sim::Time;
 	}
+
+	if (%this.nextBoss $= "") {
+		%this.nextBoss = $Sim::Time + %this.getBossSpawnInterval();
+	}
+
+	if (%this.nextBoss <= $Sim::Time) {
+		%this.spawnBoss();
+	}
+
+	%this.handleSpecialZombie(boomerZombieData);
 }
 
 function ZAMB::tickZombieThink(%this) {
@@ -115,45 +125,27 @@ function ZAMB::tickDebug(%this) {
 		%str = %str @ "\n\c6Horde:" SPC %time @ "s";
 	}
 
+	if (%this.nextBoss !$= "" && $Sim::Time < %this.nextBoss) {
+		%time = mCeil(%this.nextBoss - $Sim::Time);
+		%str = %str @ "\n\c6Boss:" SPC %time @ "s";
+	}
+
 	commandToAll('BottomPrint', "<font:lucida console:14>" @ %str @ "\n", 1, 2);
 }
 
-function ZAMB::spawnHorde(%this, %noSound) {
-	if (getRandom() <= 0.4) {
-		%n1 = 2;
-	}
-	else {
-		%n1 = 1;
+function ZAMB::handleSpecialZombie(%this, %dataBlock) {
+	if (%this.nextSpecial[%dataBlock] $= "") {
+		%this.nextSpecial[%dataBlock] = $Sim::Time + %this.getSpecialSpawnInterval() + getRandom(15, 30);
 	}
 
-	if (!%noSound) {
-		if (%n1 == 1) {
-			serverPlay2D(zamb_music_germs_low);
-		}
-		else if (%n1 == 2) {
-			serverPlay2D(zamb_music_germs_high);
-		}
+	if (%this.nextSpecial[%dataBlock] <= $Sim::Time) {
+		%this.spawnZombie(%dataBlock);
+		%this.nextSpecial[%dataBlock] = $Sim::Time + %this.getSpecialSpawnInterval();
 	}
-
-	for (%i = 0; %i < %n1; %i++) {
-		%n2 = getRandom(5, 10);
-
-		for (%j = 0; %j < %n2; %j++) {
-			%this.schedule(%j * 1000, "spawnZombie", baseZombieData);
-		}
-	}
-
-	%this.lastHorde = $Sim::Time;
-	%this.nextHorde = $Sim::Time + %this.getHordeSpawnInterval();
-}
-
-function ZAMB::spawnCommon(%this) {
-	%this.spawnZombie(baseZombieData);
-	%this.prevCommon = $Sim::Time;
 }
 
 function ZAMB::getHordeSpawnInterval(%this) {
-	return getRandom(60000, 120000) / 1000;
+	return (4 - %this.difficulty) * 60 + getRandom(-20, 30);
 }
 
 function ZAMB::getCommonSpawnInterval(%this) {
@@ -161,50 +153,32 @@ function ZAMB::getCommonSpawnInterval(%this) {
 	%limit = %this.limit / 2;
 
 	if (%count < %limit) {
-		return (%count / %limit) * 40;
+		return (%count / %limit) * 10;
 	}
 	
 	return -1;
 }
 
-function ZAMB::spawnZombie(%this, %dataBlock, %transform) {
-	if (%this.getZombieCount() >= %this.limit) {
-		return -1;
-	}
-
-	if (!isObject(%dataBlock)) {
-		error("ERROR: Unexistant datablock.");
-		return -1;
-	}
-
-	if (!%datablock.isZombie) {
-		error("ERROR: Datablock is not a zombie datablock.");
-		return -1;
-	}
-
-	if (%transform $= "") {
-		if (isObject(NodeGroup)) {
-			%index = getRandom(0, NodeGroup.getCount() - 1);
-			%node = NodeGroup.getObject(%index);
-
-			%transform = %node.position;
-		}
-		else {
-			%transform = pickSpawnPoint();
-		}
-	}
-
-	%obj = new AIPlayer() {
-		datablock = %dataBlock;
-		isZombie = true;
-	};
-
-	%this.miniGame.zombies.add(%obj);
-	%obj.setTransform(%transform);
-
-	return %obj;
+function ZAMB::getBossSpawnInterval(%this) {
+	return getRandom(120, 240);
 }
 
 function ZAMB::getZombieCount(%this) {
 	return %this.miniGame.zombies.getCount();
+}
+
+function getZAMBDifficulty(%obj) {
+	if (isObject(%obj)) {
+		%miniGame = getMiniGameFromObject(%obj);
+	}
+
+	if (!isObject(%miniGame)) {
+		%miniGame = $defaultMiniGame;
+	}
+
+	if (!isObject(%miniGame.zamb)) {
+		return -1;
+	}
+
+	return %miniGame.zamb.difficulty;
 }
