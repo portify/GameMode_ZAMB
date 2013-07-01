@@ -1,82 +1,70 @@
-function baseZombieData::zombieTick(%this, %obj, %delta) {
+function zombieData::onReachDestination(%this, %obj) {
+	parent::onReachDestination(%this, %obj);
+
+	if (%obj.path !$= "" && %obj.pathTarget !$= "") {
+		%obj.pathIndex = %obj.pathTarget;
+		%obj.pathTarget = "";
+
+		%this.updateAI(%obj);
+	}
+}
+
+function zombieData::updateAI(%this, %obj) {
 	%obj.stop();
 	%obj.clearAim();
 
-	%this.updateZombieTarget(%obj);
+	%this.updateTarget(%obj);
 
 	if (%obj.target !$= "") {
-		%move = %this.directZombieMovement(%obj) || %this.pathedZombieMovement(%obj);
-		%this.zombieAttack(%obj);
-
-		// %obj.setLine(%obj.getHackPosition(), %obj.target.getHackPosition());
-	}
-
-	%obj.setMoveX(%move ? %this.determineLOA(%obj, 1.75) : 0);
-	%obj.setJumping(%move && %this.determineJump(%obj, 2));
-	%obj.setCrouching(%move && %this.determineCrouch(%obj, 2));
-
-	if (!%move) {
-		if (vectorLen(%obj.getVelocity()) < 0.15) {
-			%obj.setActionThread("root");
+		if (%this.directMovement(%obj)) {
+			%type = 1;
 		}
-
-		if (isObject(%obj.path)) {
-			%obj.path.delete();
-			%obj.path = "";
-
-			%obj.pathIndex = "";
-			%obj.pathTarget = "";
+		else if (%this.pathedMovement(%obj)) {
+			%type = 2;
+		}
+		else {
+			%type = 0;
 		}
 	}
+
+	%obj.setMoveX(%type ? %this.shouldStrafe(%obj, 2) : 0);
+	%obj.setJumping(%type && %this.shouldJump(%obj, 2));
+	%obj.setCrouching(%tyoe && %this.shouldCrouch(%obj, 2));
 }
 
-function baseZombieData::updateZombieTarget(%this, %obj) {
-	if (%obj.target !$= "" && !%this.isValidTarget(%obj, %obj.target)) {
+function zombieData::updateTarget(%this, %obj) {
+	if (isObject(%obj.target) && %obj.getState() $= "Dead") {
 		%obj.target = "";
 	}
 
-	if (%this.shouldHaveTarget(%obj)) {
-		for (%i = 0; %i < $defaultMiniGame.numMembers; %i++) {
-			%client = $defaultMiniGame.member[%i];
-			%player = %client.player;
+	for (%i = 0; %i < $defaultMiniGame.numMembers; %i++) {
+		%player = $defaultMiniGame.member[%i].player;
 
-			if (%this.isValidTarget(%obj, %player)) {
-				%score = %this.getTargetScore(%obj, %player);
+		if (isObject(%player) && %player.getState() !$= "Dead") {
+			%score = %this.getTargetScore(%obj, %player);
 
-				if (%bestScore $= "" || %score > %bestScore) {
-					%bestScore = %score;
-					%bestTarget = %player;
-				}
+			if (%bestScore $= "" || %score > %bestScore) {
+				%bestScore = %score;
+				%bestTarget = %player;
 			}
 		}
+	}
 
-		if (%bestTarget !$= -1) {
-			if (%obj.target $= "") {
+	if (%bestTarget !$= "") {
+		if (isObject(%obj.target)) {
+			%improvement = %bestScore - %this.getTargetScore(%obj, %obj.target);
+
+			if (%improvement >= %this.targetImprovementTolerance) {
 				%obj.target = %bestTarget;
 			}
-			else {
-				%improvement = %bestScore - %this.getTargetScore(%obj, %obj.target);
-
-				if (%improvement >= %this.targetImprovementTolerance) {
-					%obj.target = %bestTarget;
-				}
-			}
+		}
+		else {
+			%obj.target = %bestTarget;
 		}
 	}
-	else if (%obj.target !$= "") {
-		%obj.target = "";
-	}
 }
 
-function baseZombieData::shouldHaveTarget(%this, %obj) {
-	return 1;
-}
-
-function baseZombieData::isValidTarget(%this, %obj, %target) {
-	return isObject(%target) && %target.getState() !$= "Dead";
-}
-
-function baseZombieData::getTargetScore(%this, %obj, %target) {
+function zombieData::getTargetScore(%this, %obj, %target) {
 	%boomer = $Sim::Time - %obj.lastBoomerVictimTime;
 
 	if ($Sim::Time - %obj.lastBoomerVictimTime < 15) {
@@ -87,48 +75,28 @@ function baseZombieData::getTargetScore(%this, %obj, %target) {
 	}
 
 	%sum += 1 - (vectorDist(%obj.position, %target.position) / 50);
-	%sum += %target.getDamageLevel() / %target.getDataBlock().maxDamage;
+	%sum += 1 - (%target.getDamageLevel() / %target.getDataBlock().maxDamage);
 
 	return %sum / 2;
 }
 
-function baseZombieData::directZombieMovement(%this, %obj) {
-	%ray = containerRayCast(
-		%obj.getEyePoint(),
-		%obj.target.getEyePoint(),
-		$TypeMasks::FxBrickObjectType
-	);
+function zombieData::directMovement(%this, %obj) {
+	if (vectorDist(%obj.position, %obj.target.position) < 16) {
+		%mask = $TypeMasks::FxBrickObjectType;
+		%ray = containerRayCast(%obj.position, %obj.target.getEyePoint());
 
-	if (%ray !$= "0") {
-		return 0;
+		if (%ray $= "0") {
+			%obj.setAimObject(%obj.target);
+			%obj.setMoveObject(%obj.target);
+
+			return 1;
+		}
 	}
 
-	%obj.setAimObject(%obj.target);
-	%obj.setMoveObject(%obj.target);
-
-	if (isObject(%obj.path)) {
-		%obj.path.delete();
-		%obj.path = "";
-
-		%obj.pathIndex = "";
-		%obj.pathTarget = "";
-	}
-
-	return 1;
+	return 0;
 }
 
-function baseZombieData::onReachDestination(%this, %obj) {
-	parent::onReachDestination(%this, %obj);
-
-	if (%obj.path !$= "" && %obj.pathTarget !$= "") {
-		%obj.pathIndex = %obj.pathTarget;
-		%obj.pathTarget = "";
-
-		%this.zombieTick(%obj, $Sim::Time - %obj.lastZombieTick);
-	}
-}
-
-function baseZombieData::pathedZombieMovement(%this, %obj) {
+function zombieData::pathedMovement(%this, %obj) {
 	if (!isObject(NodeGroup) || !NodeGroup.getCount()) {
 		return 0;
 	}
@@ -147,8 +115,8 @@ function baseZombieData::pathedZombieMovement(%this, %obj) {
 		%obj.target.lastNode = $Sim::Time;
 	}
 
-	if ( !isObject(%obj.target.node)) {
-		return false;
+	if (!isObject(%obj.target.node)) {
+		return 0;
 	}
 
 	if (%obj.path.b !$= %obj.target.node) {
@@ -162,16 +130,12 @@ function baseZombieData::pathedZombieMovement(%this, %obj) {
 		%obj.pathTarget = "";
 	}
 
-	if (!%obj.path.done) {
-		return -1;
+	if (!%obj.path.done || %obj.path.result $= "error") {
+		return 0;
 	}
 
-	if ( %obj.path.result $= "error" ) {
-		return false;
-	}
-
-	if ( %obj.index >= %length = getWordCount( %obj.path.result ) ) {
-		return false;
+	if (%obj.index >= getWordCount(%obj.path.result)) {
+		return 0;
 	}
 
 	%lookAhead = 5;
@@ -193,16 +157,13 @@ function baseZombieData::pathedZombieMovement(%this, %obj) {
 		}
 	}
 
-	%i = %obj.pathIndex;
-	%node = getWord(%obj.path.result, %i);
-
-	%obj.pathTarget = %i + 1;
-	%obj.setMoveDestination(%node.position);
+	%obj.pathTarget = %obj.pathIndex + 1;
+	%obj.setMoveDestination(getWord(%obj.path.result, %obj.pathIndex).position);
 
 	return 1;
 }
 
-function baseZombieData::determineLOA(%this, %obj, %dist) {
+function zombieData::shouldStrafe(%this, %obj, %dist) {
 	%a = %obj._loaProbe("0 0 -1", %dist);
 	%b = %obj._loaProbe("0 0 1", %dist);
 
@@ -232,11 +193,11 @@ function baseZombieData::determineLOA(%this, %obj, %dist) {
 	}
 }
 
-function baseZombieData::determineJump(%this, %obj, %dist) {
-	return %obj._zfRay(%this.maxStepHeight, %dist);
+function zombieData::shouldJump(%this, %obj, %dist) {
+	return %obj._zfRay(%this.maxStepHeight, %dist) && !%obj._zfRay(%this.jumpForce / %this.mass, %dist);
 }
 
-function baseZombieData::determineCrouch(%this, %obj, %dist) {
+function zombieData::shouldCrouch(%this, %obj, %dist) {
 	if (%obj._zfRay(%this.maxStepHeight, %dist)) {
 		return 0;
 	}

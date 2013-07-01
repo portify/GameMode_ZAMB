@@ -10,12 +10,9 @@ exec("./lib/ts-pathing.cs");
 exec("./lib/vizard.cs");
 exec("./lib/nodes.cs");
 
-exec("./src/datablocks.cs");
-exec("./src/survivor.cs");
-exec("./src/sound.cs");
-
-exec("./src/core/main.cs");
+exec("./src/zamb/main.cs");
 exec("./src/zombie/main.cs");
+exec("./src/survivor/main.cs");
 
 if (isFile("Add-Ons/GameMode_ZAMB/save.nav")) {
 	loadNodes("Add-Ons/GameMode_ZAMB/save.nav");
