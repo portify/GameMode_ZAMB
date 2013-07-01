@@ -15,5 +15,5 @@ exec("./src/zombie/main.cs");
 exec("./src/survivor/main.cs");
 
 if (isFile("Add-Ons/GameMode_ZAMB/save.nav")) {
-	loadNodes("Add-Ons/GameMode_ZAMB/save.nav");
+	schedule(0, 0, "loadNodes", "Add-Ons/GameMode_ZAMB/save.nav");
 }
