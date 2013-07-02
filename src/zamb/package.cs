@@ -2,24 +2,44 @@ package zambPackage {
 	function miniGameSO::addMember(%this, %client) {
 		parent::addMember(%this, %client);
 
-		if (%this.owner == 0 && !isObject(ZAMB) && %this.numMembers) {
-			ZAMB();
+		if (%this.owner == 0 && !isObject(%this.zamb) && %this.numMembers) {
+			%this.zamb = ZAMB_Core();
 		}
 	}
 
 	function miniGameSO::removeMember(%this, %client) {
 		parent::removeMember(%this, %client);
 
-		if (%this.owner == 0 && isObject(ZAMB) && !%this.numMembers) {
-			ZAMB.delete();
+		if (%this.owner == 0 && isObject(%this.zamb)) {
+			if (%this.numMembers) {
+				for (%i = 0; %i < %this.numMembers; %i++) {
+					%player = %this.member[%i].player;
+
+					if (isObject(%player) && %player.getState() !$= "Dead") {
+						%alive = 1;
+						break;
+					}
+				}
+
+				if (!%alive) {
+					%this.zamb.end("\c5The survivors were overwhelmed.");
+				}
+			}
+			else {
+				%this.zamb.delete();
+			}
 		}
 	}
 
 	function miniGameSO::reset(%this, %client) {
-		parent::addMember(%this, %client);
+		parent::reset(%this, %client);
 
-		if (%this.owner == 0 && isObject(ZAMB) && %this.numMembers) {
-			ZAMB();
+		if (%this.owner == 0 && isObject(%this.zamb)) {
+			%this.zamb.delete();
+
+			if (%this.numMembers) {
+				%this.zamb = ZAMB_Core();
+			}
 		}
 	}
 
@@ -53,18 +73,17 @@ package zambPackage {
 
 	function gameConnection::onDeath(%this, %obj, %src, %type, %area) {
 		parent::onDeath(%this, %obj, %src, %type, %area);
+		%miniGame = %this.miniGame;
 
-		if (%this.miniGame !$= $defaultMiniGame) {
+		if (isObject(%miniGame) && %miniGame !$= $defaultMiniGame) {
 			return;
 		}
 
 		messageClient(%this, 'MsgYourSpawn');
 
-		if (!isObject(ZAMB) || ZAMB.ended) {
+		if (!isObject(%miniGame.zamb) || %miniGame.zamb.ended) {
 			return;
 		}
-
-		%alive = 0;
 
 		for (%i = 0; %i < %miniGame.numMembers; %i++) {
 			%player = %miniGame.member[%i].player;
@@ -76,7 +95,7 @@ package zambPackage {
 		}
 
 		if (!%alive) {
-			ZAMB.end("\c5The survivors were overwhelmed.");
+			%miniGame.zamb.end("\c5The survivors were overwhelmed.");
 		}
 	}
 
@@ -87,11 +106,13 @@ package zambPackage {
 			return parent::onTrigger(%this, %obj, %slot, %state);
 		}
 
-		if (%client.miniGame != $defaultMiniGame) {
+		%miniGame = %client.miniGame;
+
+		if (!isObject(%miniGame) || %miniGame != $defaultMiniGame) {
 			return parent::onTrigger(%this, %obj, %slot, %state);
 		}
 
-		if (!isObject(ZAMB) || ZAMB.ended) {
+		if (!isObject(%miniGame.zamb) || %miniGame.zamb.ended) {
 			return;
 		}
 

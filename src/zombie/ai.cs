@@ -9,6 +9,17 @@ function zombieData::onReachDestination(%this, %obj) {
 	}
 }
 
+function Player::setAIDebug(%this, %text) {
+	if (!isObject(%this.camera)) {
+		%this.camera = new Camera() {
+			datablock = Observer;
+		};
+	}
+
+	%this.camera.setTransform(%this.position);
+	%this.camera.setShapeName(%text);
+}
+
 function zombieData::updateAI(%this, %obj) {
 	%obj.stop();
 	%obj.clearAim();
@@ -24,12 +35,17 @@ function zombieData::updateAI(%this, %obj) {
 		}
 		else {
 			%type = 0;
+
+			%obj.target.lastReachFail = $Sim::Time;
+			%obj.target = "";
 		}
 	}
 
 	%obj.setMoveX(%type ? %this.shouldStrafe(%obj, 2) : 0);
 	%obj.setJumping(%type && %this.shouldJump(%obj, 2));
-	%obj.setCrouching(%tyoe && %this.shouldCrouch(%obj, 2));
+	%obj.setCrouching(%type && %this.shouldCrouch(%obj, 2));
+
+	%this.zombieAttack(%obj);
 }
 
 function zombieData::updateTarget(%this, %obj) {
@@ -65,6 +81,10 @@ function zombieData::updateTarget(%this, %obj) {
 }
 
 function zombieData::getTargetScore(%this, %obj, %target) {
+	if ($Sim::Time - %obj.lastReachFail <= 1) {
+		return -1;
+	}
+
 	%boomer = $Sim::Time - %obj.lastBoomerVictimTime;
 
 	if ($Sim::Time - %obj.lastBoomerVictimTime < 15) {
@@ -81,16 +101,18 @@ function zombieData::getTargetScore(%this, %obj, %target) {
 }
 
 function zombieData::directMovement(%this, %obj) {
-	if (vectorDist(%obj.position, %obj.target.position) < 16) {
-		%mask = $TypeMasks::FxBrickObjectType;
-		%ray = containerRayCast(%obj.position, %obj.target.getEyePoint());
+	%mask = $TypeMasks::FxBrickObjectType;
+	%ray = containerRayCast(
+		vectorAdd(%obj.position, "0 0" SPC %this.maxStepHeight),
+		vectorAdd(%obj.target.position, "0 0" SPC %this.maxStepHeight),
+		$TypeMasks::FxBrickObjectType
+	);
 
-		if (%ray $= "0") {
-			%obj.setAimObject(%obj.target);
-			%obj.setMoveObject(%obj.target);
+	if (%ray $= "0") {
+		%obj.setAimObject(%obj.target);
+		%obj.setMoveObject(%obj.target);
 
-			return 1;
-		}
+		return 1;
 	}
 
 	return 0;
@@ -101,25 +123,14 @@ function zombieData::pathedMovement(%this, %obj) {
 		return 0;
 	}
 
-	if ($Sim::Time - %obj.lastNode > 0.5) {
-		%obj.node = NodeGroup.findNearest(%obj.position, 16, 1);
-		%obj.lastNode = $Sim::Time;
+	%a = %obj.getNearestNode();
+	%b = %obj.target.getNearestNode();
+
+	if (!isObject(%a) || !isObject(%b)) {
+		return;
 	}
 
-	if (!isObject(%obj.node)) {
-		return 0;
-	}
-
-	if ($Sim::Time - %obj.target.lastNode > 0.5) {
-		%obj.target.node = NodeGroup.findNearest(%obj.target.position, 16, 1);
-		%obj.target.lastNode = $Sim::Time;
-	}
-
-	if (!isObject(%obj.target.node)) {
-		return 0;
-	}
-
-	if (%obj.path.b !$= %obj.target.node) {
+	if (%obj.path.b !$= %b) {
 		if (isObject(%obj.path)) {
 			%obj.path.delete();
 		}
@@ -134,26 +145,26 @@ function zombieData::pathedMovement(%this, %obj) {
 		return 0;
 	}
 
-	if (%obj.index >= getWordCount(%obj.path.result)) {
+	if (%obj.pathIndex >= getWordCount(%obj.path.result)) {
 		return 0;
 	}
 
-	%lookAhead = 5;
+	if (%this.rpfLookAhead !$= "") {
+		for (%i = %obj.pathIndex + %this.rpfLookAhead; %i >= %obj.pathIndex; %i--) {
+			%node = getWord(%obj.path.result, %i);
 
-	for (%i = %obj.pathIndex + %lookAhead; %i >= %obj.pathIndex; %i--) {
-		%node = getWord(%obj.path.result, %i);
+			%ray = containerRayCast(
+				vectorAdd(%obj.position, "0 0" SPC %this.maxStepHeight),
+				vectorAdd(%node.position, "0 0" SPC %this.maxStepHeight),
+				$TypeMasks::FxBrickObjectType
+			);
 
-		%ray = containerRayCast(
-			vectorAdd(%obj.position, "0 0" SPC %this.maxStepHeight),
-			vectorAdd(%node.position, "0 0" SPC %this.maxStepHeight),
-			$TypeMasks::FxBrickObjectType
-		);
+			if (%ray $= "0") {
+				%obj.pathTarget = %i + 1;
+				%obj.setMoveDestination(%node.position);
 
-		if (%ray $= "0") {
-			%obj.pathTarget = %i + 1;
-			%obj.setMoveDestination(%node.position);
-
-			return 1;
+				return 1;
+			}
 		}
 	}
 
@@ -198,6 +209,18 @@ function zombieData::shouldJump(%this, %obj, %dist) {
 }
 
 function zombieData::shouldCrouch(%this, %obj, %dist) {
+	%pos = vectorAdd(%obj.position, vectorScale(%obj.getForwardVector(), 0.5));
+
+	%ray = containerRayCast(
+		vectorAdd(%pos, "0 0 0.1"),
+		vectorAdd(%pos, "0 0 1.6"),
+		$TypeMasks::FxBrickObjectType
+	);
+
+	if (%ray !$= "0") {
+		return 1;
+	}
+
 	if (%obj._zfRay(%this.maxStepHeight, %dist)) {
 		return 0;
 	}
@@ -242,4 +265,18 @@ function AIPlayer::_loaProbe(%this, %up, %dist) {
 	%stop = vectorAdd(%stop, vectorScale(%forward, %length));
 
 	return containerRayCast(%start, %stop, $TypeMasks::All, %this) !$= 0;
+}
+
+function Player::getNearestNode(%this) {
+	if ($Sim::Time - %this.lastNode > 0.5) {
+		%this.node = NodeGroup.findNearest(%this.position, 16, 1);
+		
+		if (!isObject(%this.node)) {
+			%this.node = NodeGroup.findNearest(%this.position, 16);
+		}
+
+		%this.lastNode = $Sim::Time;
+	}
+
+	return %obj.node;
 }

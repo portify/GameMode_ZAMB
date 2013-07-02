@@ -1,8 +1,28 @@
+function ZAMB_Zombies(%zamb) {
+	return new ScriptGroup() {
+		class = ZAMB_Zombies;
+		zamb = %zamb;
+	};
+}
+
+function ZAMB_Zombies::onAdd(%this) {
+	%this.wanderers = new SimSet() { limit = 10; };
+	%this.hordes    = new SimSet() { limit = 30; };
+	%this.specials  = new SimSet() { limit = 3;  };
+	%this.bosses    = new SimSet() { limit = 8;  };
+}
+
+function ZAMB_Zombies::onRemove(%this) {
+	%this.wanderers.delete();
+	%this.hordes.delete();
+	%this.specials.delete();
+	%this.bosses.delete();
+}
+
 function ZAMB_Zombies::tick(%this) {
 	%count = %this.getCount();
-	%usage = 0;
 
-	while (%count && %usage < $ZAMB::ThinkLimit) {
+	while (%count && %usage < %this.zamb.thinkLimit) {
 		%this.index = %this.index % %count;
 		%obj = %this.getObject(%this.index);
 
@@ -18,7 +38,7 @@ function ZAMB_Zombies::tick(%this) {
 			continue;
 		}
 
-		%obj.getDataBlock().updateAI(%obj);
+		//%obj.getDataBlock().updateAI(%obj);
 		%seen[%obj] = 1;
 
 		%this.index++;
@@ -32,7 +52,19 @@ function ZAMB_Zombies::create(%this, %dataBlock, %transform) {
 		return -1;
 	}
 
-	if (%this.getCount() >= $ZAMB::ZombieLimit) {
+	switch$ (%dataBlock.zombieType) {
+		case 0: %group = %this.wanderers;
+		case 1: %group = %this.hordes;
+		case 2: %group = %this.specials;
+		case 3: %group = %this.bosses;
+	}
+
+	if (!isObject(%group)) {
+		error("ERROR: Zombie datablock has an invalid zombieType attribute.");
+		return -1;
+	}
+
+	if (%group.getCount() >= %group.limit) {
 		return -1;
 	}
 
@@ -46,8 +78,9 @@ function ZAMB_Zombies::create(%this, %dataBlock, %transform) {
 	}
 
 	%this.add(%obj);
-	%obj.setTransform(%transform);
+	%group.add(%obj);
 
+	%obj.setTransform(%transform);
 	return %obj;
 }
 
@@ -99,8 +132,8 @@ function NodeGroup::findAllZombieSpawns(%this, %miniGame, %objectBox) {
 
 function NodeSO::isValidZombieSpawn(%this, %miniGame) {
 	if (isObject(%miniGame)) {
-		%min = 8;
-		%max = 32;
+		%min = 4;
+		%max = 16;
 
 		for (%i = 0; %i < %miniGame.numMembers; %i++) {
 			%obj = %miniGame.member[%i].player;

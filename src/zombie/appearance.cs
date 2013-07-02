@@ -9,7 +9,7 @@ $skinColorBlueMin = 0.60;
 
 $skinColorSym = "gb";
 
-function baseZombieData::applyZombieAppearance(%this, %obj) {
+function zombieData::applyZombieAppearance(%this, %obj) {
 	%skin = getZombieSkinColor();
 
 	%obj.setNodeColor("headSkin", %skin);

@@ -19,19 +19,24 @@ datablock playerData(zombieData : playerStandardArmor) {
 
 	minImpactSpeed = 24;
 	speedDamageScale = 3.9;
-	targetImprovementTolerance = 0.15;
 
 	isZombie = 1;
 	isSurvivor = 0;
+
+	zombieType = 0;
+	targetImprovementTolerance = 0.15;
 };
 
 exec("./ai.cs");
 exec("./appearance.cs");
 
+exec("./types/wanderer.cs");
+exec("./types/horde.cs");
+
 function zombieData::onAdd(%this, %obj) {
 	parent::onAdd(%this, %obj);
 
-	%obj.setMoveTolerance(1.78);
+	%obj.setMoveTolerance(0.75); // 1.78
 	%obj.setMoveSlowdown(0);
 
 	%obj.setActionThread("root");
@@ -41,6 +46,10 @@ function zombieData::onAdd(%this, %obj) {
 function zombieData::onRemove(%this, %obj) {
 	if (isObject(%obj.path)) {
 		%obj.path.delete();
+	}
+
+	if (isObject(%obj.camera)) {
+		%obj.camera.delete();
 	}
 }
 
@@ -54,7 +63,7 @@ function zombieData::zombieAttack(%this, %obj) {
 
 	initContainerRadiusSearch(%start, 3, $TypeMasks::PlayerObjectType);
 
-	switch (ZAMB.ended) {
+	switch (ZAMB.difficulty) {
 		case 0: %damage = 1;
 		case 1: %damage = 2;
 		case 2: %damage = 5;

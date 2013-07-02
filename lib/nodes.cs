@@ -271,7 +271,7 @@ function nodeSG::findNearest( %this, %position, %range, %visible )
 	return %node;
 }
 
-function loadNodes( %file )
+function loadNodes( %file, %debug )
 {
 	%mode = 0;
 	%nodes = 0;
@@ -321,6 +321,11 @@ function loadNodes( %file )
 
 	%fo.close();
 	%fo.delete();
+
+	if ( %debug )
+	{
+		NodeGroup.setDebug( %debug );
+	}
 }
 
 function saveNodes( %file )
