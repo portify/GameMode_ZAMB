@@ -24,28 +24,29 @@ package zambPackage {
 	}
 
 	function miniGameCanDamage(%a, %b) {
-		if (%b.getType() & $TypeMasks::PlayerObjectType) {
-			if (%b.getDataBlock().isZombie) {
-				return 1;
+		%m1 = getMiniGameFromObject(%a);
+		%m2 = getMiniGameFromObject(%b);
+
+		if (!isObject(%m2)) {
+			if (%b.getType() && $TypeMasks::PlayerObjectType) {
+				if (%b.getDataBlock().isZombie) {
+					%m2 = $defaultMiniGame;
+				}
 			}
 		}
 
-		%parent = parent::miniGameCanDamage(%a, %b);
-
-		if (isObject(%a)) {
-			%m1 = getMiniGameFromObject(%a);
-		}
-
-		if (isObject(%b)) {
-			%m2 = getMiniGameFromObject(%b);
-		}
-
 		if (%m1 != $defaultMiniGame || %m2 != $defaultMiniGame) {
-			return %parent;
+			return parent::miniGameCanDamage(%a, %b);
 		}
+
+		return 1;
 
 		%t1 = %a.getType() & $TypeMasks::PlayerObjectType;
 		%t2 = %b.getType() & $TypeMasks::PlayerObjectType;
+
+		if (!%t1 || !%t2) {
+			return %parent;
+		}
 
 		return %t1 && %t2 ? 1 : %parent;
 	}
