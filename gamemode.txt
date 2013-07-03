@@ -71,3 +71,7 @@ $MiniGame::PlayerDataBlockName Survivor Player
 $MiniGame::StartEquipName0 HK: AK-103
 $MiniGame::StartEquipName1 HK: USP.45
 $MiniGame::StartEquipName2 0
+
+// Server Settings
+$Server::Quota::Schedules 1000
+$Server::QuotaLAN::Schedules 1000

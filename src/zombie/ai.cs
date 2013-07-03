@@ -278,5 +278,5 @@ function Player::getNearestNode(%this) {
 		%this.lastNode = $Sim::Time;
 	}
 
-	return %obj.node;
+	return %this.node;
 }

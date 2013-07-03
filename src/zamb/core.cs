@@ -35,6 +35,10 @@ function ZAMB_Core::onRemove(%this) {
 function ZAMB_Core::tick(%this) {
 	cancel(%this.tick);
 
+	if (%this.ended) {
+		return;
+	}
+
 	%this.director.tick();
 	%this.zombies.tick();
 
@@ -86,4 +90,6 @@ function ZAMB_Core::end(%this, %message) {
 			%client.setControlObject(%client.camera);
 		}
 	}
+
+	$defaultMiniGame.schedule(10000, "reset", 0);
 }

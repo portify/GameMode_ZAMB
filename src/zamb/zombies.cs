@@ -78,7 +78,7 @@ function ZAMB_Zombies::tick(%this) {
 			continue;
 		}
 
-		//%obj.getDataBlock().updateAI(%obj);
+		%obj.getDataBlock().updateAI(%obj);
 		%seen[%obj] = 1;
 
 		%this.index++;

@@ -14,6 +14,8 @@ function ZAMB_Director::onAdd(%this) {
 
 	%this.tempo = 0;
 	%this.start = $Sim::Time;
+
+	%this.zombies = %this.zamb.zombies;
 }
 
 function ZAMB_Director::onRemove(%this) {
@@ -42,6 +44,8 @@ function ZAMB_Director::tick(%this) {
 			%intensity = %local;
 		}
 	}
+
+	%this.maintainBosses();
 
 	switch (%this.tempo) {
 		case 0: %this.tickMake(%intensity);
@@ -100,7 +104,7 @@ function ZAMB_Director::tickMake(%this, %intensity) {
 		%this.setTempo(1, 3 + getRandom() * 2);
 	}
 	else {
-		//%this.maintainFullThreat();
+		%this.maintainFullThreat();
 	}
 }
 
@@ -109,7 +113,7 @@ function ZAMB_Director::tickKeep(%this, %intensity) {
 		%this.setTempo(2);
 	}
 	else {
-		//%this.maintainFullThreat();
+		%this.maintainFullThreat();
 	}
 }
 
