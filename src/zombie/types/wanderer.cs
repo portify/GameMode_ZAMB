@@ -10,16 +10,16 @@ function wandererZombieData::onRemove(%this, %obj) {
 	zombieData::onRemove(%this, %obj);
 }
 
+function wandererZombieData::onReachDestination(%this, %obj) {
+	zombieData::onReachDestination(%this, %obj);
+}
+
 function wandererZombieData::applyZombieAppearance(%this, %obj) {
 	zombieData::applyZombieAppearance(%this, %obj);
 }
 
 function wandererZombieData::zombieAttack(%this, %obj) {
 	zombieData::zombieAttack(%this, %obj);
-}
-
-function wandererZombieData::onReachDestination(%this, %obj) {
-	zombieData::onReachDestination(%this, %obj);
 }
 
 function wandererZombieData::updateAI(%this, %obj) {

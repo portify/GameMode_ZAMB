@@ -30,8 +30,15 @@ datablock playerData(zombieData : playerStandardArmor) {
 exec("./ai.cs");
 exec("./appearance.cs");
 
+// Core types
 exec("./types/wanderer.cs");
 exec("./types/horde.cs");
+
+// Specials
+exec("./types/boomer.cs");
+
+// Bosses
+exec("./types/tank.cs");
 
 function zombieData::onAdd(%this, %obj) {
 	parent::onAdd(%this, %obj);

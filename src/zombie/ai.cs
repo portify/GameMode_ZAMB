@@ -85,9 +85,7 @@ function zombieData::getTargetScore(%this, %obj, %target) {
 		return -1;
 	}
 
-	%boomer = $Sim::Time - %obj.lastBoomerVictimTime;
-
-	if ($Sim::Time - %obj.lastBoomerVictimTime < 15) {
+	if (%obj.isBoomerVictim()) {
 		%sum = 5;
 	}
 	else {

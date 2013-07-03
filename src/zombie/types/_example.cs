@@ -10,16 +10,16 @@ function exampleZombieData::onRemove(%this, %obj) {
 	zombieData::onRemove(%this, %obj);
 }
 
+function exampleZombieData::onReachDestination(%this, %obj) {
+	zombieData::onReachDestination(%this, %obj);
+}
+
 function exampleZombieData::applyZombieAppearance(%this, %obj) {
 	zombieData::applyZombieAppearance(%this, %obj);
 }
 
 function exampleZombieData::zombieAttack(%this, %obj) {
 	zombieData::zombieAttack(%this, %obj);
-}
-
-function exampleZombieData::onReachDestination(%this, %obj) {
-	zombieData::onReachDestination(%this, %obj);
 }
 
 function exampleZombieData::updateAI(%this, %obj) {

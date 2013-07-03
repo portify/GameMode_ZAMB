@@ -18,7 +18,7 @@ function ZAMB_Director::maintainWanderers(%this) {
 		return;
 	}
 
-	%interval = (%count / %limit) * 10;
+	%interval = 1 + (%count / %limit) * 20;
 
 	if ($Sim::Time - %this.prevCommon >= %interval) {
 		%this.zombies.spawn(wandererZombieData);
@@ -41,10 +41,12 @@ function ZAMB_Director::maintainHordes(%this) {
 
 function ZAMB_Director::horde(%this) {
 	%size = getRandom(10, 30);
-	%node = NodeGroup.findZombieSpawn();
+	%node = NodeGroup.findZombieSpawn(%this.zombies.hordes.spawnRange);
+
+	%this.prevHorde = $Sim::Time;
+	%this.nextHorde = $Sim::Time + %this.getHordeSpawnInterval();
 
 	%this.hordeSpawner(%node, %size);
-	%this.nextHorde = $Sim::Time + %this.getHordeSpawnInterval();
 }
 
 function ZAMB_Director::hordeSpawner(%this, %node, %size) {
@@ -67,42 +69,6 @@ function ZAMB_Director::getHordeSpawnInterval(%this) {
 	return (4 - %this.zamb.difficulty) * 60 + getRandom(-20, 30);
 }
 
-// -------------
-// Boss spawning
-
-function ZAMB_Director::maintainBosses(%this) {
-	if (%this.nextBoss $= "") {
-		%this.nextBoss = $Sim::Time + %this.getBossSpawnInterval();
-	}
-
-	if (%this.nextBoss <= $Sim::Time) {
-		%this.boss();
-	}
-}
-
-function ZAMB_Director::boss(%this) {
-	%this.nextBoss = "";
-	%types = "none tank";
-
-	if (%this.lastBossType !$= "") {
-		%types = trim(strReplace(" " @ %types @ " ", " " @ %this.lastBossType @ " ", " "));
-	}
-
-	%type = pickRandomItemFromList(%types);
-
-	if (%type $= "" || %type $= "none") {
-		return;
-	}
-
-	switch$ (%type) {
-		case "tank": %this.zombies.spawn(tankZombieData);
-	}
-}
-
-function ZAMB_Director::getBossSpawnInterval(%this) {
-	return getRandom(150, 300);
-}
-
 // ----------------
 // Special spawning
 
@@ -111,22 +77,16 @@ function ZAMB_Director::maintainSpecials(%this) {
 		return;
 	}
 
-	if (%this.zombies.getCount() >= $ZAMB::ZombieLimit) {
+	if (%this.zombies.specials.getCount() >= %this.zombies.specials.limit) {
 		return;
 	}
 
-	%types = "";
+	%types = "boomerZombieData";
 	%count = %this.zombies.specials.getCount();
 
 	for (%i = 0; %i < %count; %i++) {
 		%obj = %this.zombies.specials.getObject(%i);
-
 		%exists[%obj.getDataBlock()] = 1;
-		%total++;
-	}
-
-	if (%total >= 3) {
-		return;
 	}
 
 	%count = getFieldCount(%types);
@@ -166,4 +126,40 @@ function ZAMB_Director::maintainSpecials(%this) {
 			%this.specialTimer[%type] = "";
 		}
 	}
+}
+
+// -------------
+// Boss spawning
+
+function ZAMB_Director::maintainBosses(%this) {
+	if (%this.nextBoss $= "") {
+		%this.nextBoss = $Sim::Time + %this.getBossSpawnInterval();
+	}
+
+	if (%this.nextBoss <= $Sim::Time) {
+		%this.boss();
+	}
+}
+
+function ZAMB_Director::boss(%this) {
+	%this.nextBoss = "";
+	%types = "none tank";
+
+	if (%this.lastBossType !$= "") {
+		%types = trim(strReplace(" " @ %types @ " ", " " @ %this.lastBossType @ " ", " "));
+	}
+
+	%type = pickRandomItemFromList(%types);
+
+	if (%type $= "" || %type $= "none") {
+		return;
+	}
+
+	switch$ (%type) {
+		case "tank": %this.zombies.spawn(tankZombieData);
+	}
+}
+
+function ZAMB_Director::getBossSpawnInterval(%this) {
+	return getRandom(150, 300);
 }

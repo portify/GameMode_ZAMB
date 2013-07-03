@@ -10,6 +10,8 @@ exec("./lib/vizard.cs");
 exec("./lib/nodes.cs");
 
 exec("./src/zamb/main.cs");
+exec("./src/misc/main.cs");
+
 exec("./src/zombie/main.cs");
 exec("./src/survivor/main.cs");
 

@@ -13,12 +13,12 @@ function ZAMB_Zombies::onAdd(%this) {
 	%this.wanderers = new SimSet() {
 		limit = 10;
 
-		spawnRange = 24;
-		despawnRange = 32;
+		spawnRange = 30;
+		despawnRange = 40;
 	};
 
 	%this.hordes = new SimSet() {
-		limit = 30;
+		limit = 20;
 		
 		spawnRange = 24;
 		despawnRange = 32;
@@ -48,6 +48,23 @@ function ZAMB_Zombies::onRemove(%this) {
 	%this.hordes.delete();
 	%this.specials.delete();
 	%this.bosses.delete();
+}
+
+function ZAMB_Zombies::stop(%this) {
+	%count = %this.getCount();
+
+	for (%i = 0; %i < %count; %i++) {
+		%obj = %this.getObject(%i);
+
+		%obj.stop();
+		%obj.clearAim();
+
+		%obj.setMoveX(0);
+		%obj.setMoveY(0);
+
+		%obj.setJumping(0);
+		%obj.setCrouching(0);
+	}
 }
 
 function ZAMB_Zombies::tick(%this) {
@@ -160,7 +177,7 @@ function NodeSO::isValidZombieSpawn(%this, %range) {
 		if (isObject(%obj) && %obj.getState() !$= "Dead") {
 			%dist = vectorDist(%this.position, %obj.position);
 
-			if (%dist > %range) {
+			if (%dist < 5 || %dist > %range) {
 				continue;
 			}
 

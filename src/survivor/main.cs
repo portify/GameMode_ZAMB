@@ -30,3 +30,54 @@ datablock playerData(survivorData : playerStandardArmor) {
 	isZombie = 0;
 	isSurvivor = 1;
 };
+
+exec("./flashlight.cs");
+exec("./shove.cs");
+
+package zambSurvivorPackage {
+	function serverCmdLight(%client) {
+		if (!isObject(%client.miniGame) || %client.miniGame != $defaultMiniGame) {
+			parent::serverCmdLight(%client);
+			return;
+		}
+
+		%player = %client.player;
+
+		if (!isObject(%player) || %player.getState() $= "Dead") {
+			parent::serverCmdLight(%client);
+			return;
+		}
+
+		if (!%player.getDataBlock().isSurvivor) {
+			return;
+		}
+
+		if (getSimTime() - %player.lastLightTime < 250) {
+			return;
+		}
+
+		%player.lastLightTime = getSimTime();
+
+		if (isObject(%player.light)) {
+			%player.light.delete();
+		}
+		else {
+			%player.light = new fxLight() {
+				datablock = playerFlashlightData;
+				iconSize = 1;
+
+				player = %player;
+				enable = 1;
+			};
+
+			missionCleanup.add(%player.light);
+			%player.light.setTransform(%player.getTransform());
+
+			if (!isEventPending(%player.flashlightTick)) {
+				%player.flashlightTick();
+			}
+		}
+	}
+};
+
+activatePackage("zambSurvivorPackage");

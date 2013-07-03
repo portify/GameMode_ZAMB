@@ -1,4 +1,5 @@
 exec("./package.cs");
+exec("./damage.cs");
 
 exec("./core.cs");
 exec("./zombies.cs");

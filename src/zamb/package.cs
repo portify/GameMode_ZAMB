@@ -71,7 +71,7 @@ package zambPackage {
 		return %t1 && %t2 ? 1 : %parent;
 	}
 
-	function gameConnection::onDeath(%this, %obj, %src, %type, %area) {
+	function GameConnection::onDeath(%this, %obj, %src, %type, %area) {
 		parent::onDeath(%this, %obj, %src, %type, %area);
 		%miniGame = %this.miniGame;
 
@@ -96,6 +96,17 @@ package zambPackage {
 
 		if (!%alive) {
 			%miniGame.zamb.end("\c5The survivors were overwhelmed.");
+		}
+	}
+
+	function GameConnection::setControlObject(%this, %obj) {
+		parent::setControlObject(%this, %obj);
+
+		%client = %obj.client;
+		%miniGame = %client.miniGame;
+
+		if (isObject(%miniGame) && %miniGame == $defaultMiniGame) {
+			%client.updateZAMBVignette();
 		}
 	}
 
