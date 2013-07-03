@@ -23,7 +23,7 @@ datablock playerData(zombieData : playerStandardArmor) {
 	isZombie = 1;
 	isSurvivor = 0;
 
-	zombieType = 0;
+	zombieType = -1;
 	targetImprovementTolerance = 0.15;
 };
 

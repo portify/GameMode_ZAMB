@@ -10,10 +10,25 @@ function ZAMB_Zombies::onAdd(%this) {
 		echo("ZAMB_Zombies(" @ %this @ ")::onAdd");
 	}
 
-	%this.wanderers = new SimSet() { limit = 10; };
-	%this.hordes    = new SimSet() { limit = 30; };
-	%this.specials  = new SimSet() { limit = 3;  };
-	%this.bosses    = new SimSet() { limit = 8;  };
+	%this.wanderers = new SimSet() {
+		limit = 10;
+		range = 16;
+	};
+
+	%this.hordes = new SimSet() {
+		limit = 30;
+		range = 32;
+	};
+
+	%this.specials = new SimSet() {
+		limit = 3;
+		range = 100;
+	};
+
+	%this.bosses = new SimSet() {
+		limit = 8;
+		range = -1;
+	};
 }
 
 function ZAMB_Zombies::onRemove(%this) {
@@ -38,7 +53,7 @@ function ZAMB_Zombies::tick(%this) {
 			break;
 		}
 
-		if (%obj.getState() $= "Dead") {
+		if (%obj.getState() $= "Dead" || !%obj.hasSurvivorWithinRange(%obj.typeGroup.range)) {
 			%this.remove(%obj);
 			%this.index--;
 
@@ -78,6 +93,7 @@ function ZAMB_Zombies::create(%this, %dataBlock, %transform) {
 
 	%obj = new AIPlayer() {
 		datablock = %dataBlock;
+		typeGroup = %group;
 	};
 
 	if (!isObject(%obj)) {
@@ -189,4 +205,24 @@ function pickRandomItemFromList(%list) {
 	}
 
 	return getWord(%list, getRandom(0, %count - 1));
+}
+
+function AIPlayer::hasSurvivorWithinRange(%this, %range) {
+	if (%range == -1) {
+		return 1;
+	}
+
+	initContainerRadiusSearch(%this.position, %range, $TypeMasks::PlayerObjectType);
+
+	while (isObject(%obj = containerSearchNext())) {
+		if (!%obj.getDataBlock().isSurvivor || %obj.getState() $= "Dead") {
+			continue;
+		}
+
+		if (vectorDist(%obj.position, %obj.range) >= %range) {
+			continue;
+		}
+	}
+
+	return 0;
 }

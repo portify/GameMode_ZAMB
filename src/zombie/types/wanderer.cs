@@ -1,4 +1,4 @@
-datablock playerData(wandererZombieData : playerStandardArmor) {
+datablock playerData(wandererZombieData : zombieData) {
 	zombieType = 0;
 };
 

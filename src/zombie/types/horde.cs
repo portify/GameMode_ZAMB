@@ -1,4 +1,4 @@
-datablock playerData(hordeZombieData : playerStandardArmor) {
+datablock playerData(hordeZombieData : zombieData) {
 	zombieType = 1;
 };
 

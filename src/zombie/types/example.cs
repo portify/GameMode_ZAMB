@@ -1,4 +1,4 @@
-datablock playerData(exampleZombieData : playerStandardArmor) {
+datablock playerData(exampleZombieData : zombieData) {
 	attribute = 1;
 };
 

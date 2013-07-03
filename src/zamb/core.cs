@@ -45,8 +45,18 @@ function ZAMB_Core::tick(%this) {
 	%this.tick = %this.schedule(100, tick);
 }
 
-function ZAMB::debug(%this) {
-	return "\c6population: " @ %this.zombies.getCount();
+function ZAMB_Core::debug(%this) {
+	%wanderers = %this.zombies.wanderers.getCount() @ "/" @ %this.zombies.wanderers.limit;
+	%hordes = %this.zombies.hordes.getCount() @ "/" @ %this.zombies.hordes.limit;
+	%specials = %this.zombies.specials.getCount() @ "/" @ %this.zombies.specials.limit;
+	%bosses = %this.zombies.bosses.getCount() @ "/" @ %this.zombies.bosses.limit;
+
+	%str = "\c6wanderers:" SPC %wanderers;
+	%str = %str @ "\n\c6hordes:" SPC %hordes;
+	%str = %str @ "\n\c6specials:" SPC %specials;
+	%str = %str @ "\n\c6bosses:" SPC %bosses;
+
+	return %str;
 }
 
 function ZAMB_Core::end(%this, %message) {
