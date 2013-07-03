@@ -6,6 +6,10 @@ function ZAMB_Zombies(%zamb) {
 }
 
 function ZAMB_Zombies::onAdd(%this) {
+	if ($Pref::Server::ZAMBDebug) {
+		echo("ZAMB_Zombies(" @ %this @ ")::onAdd");
+	}
+
 	%this.wanderers = new SimSet() { limit = 10; };
 	%this.hordes    = new SimSet() { limit = 30; };
 	%this.specials  = new SimSet() { limit = 3;  };
@@ -13,6 +17,10 @@ function ZAMB_Zombies::onAdd(%this) {
 }
 
 function ZAMB_Zombies::onRemove(%this) {
+	if ($Pref::Server::ZAMBDebug) {
+		echo("ZAMB_Zombies(" @ %this @ ")::onRemove");
+	}
+
 	%this.wanderers.delete();
 	%this.hordes.delete();
 	%this.specials.delete();

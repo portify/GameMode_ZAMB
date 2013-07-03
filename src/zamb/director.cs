@@ -8,8 +8,18 @@ function ZAMB_Director(%zamb) {
 }
 
 function ZAMB_Director::onAdd(%this) {
+	if ($Pref::Server::ZAMBDebug) {
+		echo("ZAMB_Director(" @ %this @ ")::onAdd");
+	}
+
 	%this.tempo = 0;
 	%this.start = $Sim::Time;
+}
+
+function ZAMB_Director::onRemove(%this) {
+	if ($Pref::Server::ZAMBDebug) {
+		echo("ZAMB_Director(" @ %this @ ")::onRemove");
+	}
 }
 
 function ZAMB_Director::tick(%this) {
@@ -42,6 +52,19 @@ function ZAMB_Director::tick(%this) {
 }
 
 function ZAMB_Director::setTempo(%this, %tempo, %length, %a, %b, %c) {
+	if ($Pref::Server::ZAMBDebug) {
+		switch (%tempo) {
+			case 0: %name = "PEAK_MAKE";
+			case 1: %name = "PEAK_KEEP";
+			case 2: %name = "PEAK_FADE";
+			case 3: %name = "PEAK_WAIT";
+
+			default: %name = "#INVALID";
+		}
+
+		echo("ZAMB_Core(" @ %this @ ")::setTempo(" @ %tempo @ ")");
+	}
+
 	%this.start = $Sim::Time;
 
 	%this.tempo = %tempo;

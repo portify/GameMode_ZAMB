@@ -9,6 +9,10 @@ function ZAMB_Core() {
 }
 
 function ZAMB_Core::onAdd(%this) {
+	if ($Pref::Server::ZAMBDebug) {
+		echo("ZAMB_Core(" @ %this @ ")::onAdd");
+	}
+
 	if (%this.difficulty $= "") {
 		%this.difficulty = $Pref::Server::ZAMBDifficulty;
 	}
@@ -20,6 +24,10 @@ function ZAMB_Core::onAdd(%this) {
 }
 
 function ZAMB_Core::onRemove(%this) {
+	if ($Pref::Server::ZAMBDebug) {
+		echo("ZAMB_Core(" @ %this @ ")::onRemove");
+	}
+
 	%this.director.delete();
 	%this.zombies.delete();
 }
@@ -42,6 +50,10 @@ function ZAMB::debug(%this) {
 }
 
 function ZAMB_Core::end(%this, %message) {
+	if ($Pref::Server::ZAMBDebug) {
+		echo("ZAMB_Core(" @ %this @ ")::end()");
+	}
+
 	if (%this.ended) {
 		return;
 	}
