@@ -17,7 +17,7 @@ function ZAMB_Core::onAdd(%this) {
 		%this.difficulty = $Pref::Server::ZAMBDifficulty;
 	}
 
-	%this.zombies = ZAMB_Zombies();
+	%this.zombies = ZAMB_Zombies(%this);
 	%this.director = ZAMB_Director(%this);
 
 	%this.tick = %this.schedule(0, tick);

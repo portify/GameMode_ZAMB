@@ -12,22 +12,30 @@ function ZAMB_Zombies::onAdd(%this) {
 
 	%this.wanderers = new SimSet() {
 		limit = 10;
-		range = 16;
+
+		spawnRange = 24;
+		despawnRange = 32;
 	};
 
 	%this.hordes = new SimSet() {
 		limit = 30;
-		range = 32;
+		
+		spawnRange = 24;
+		despawnRange = 32;
 	};
 
 	%this.specials = new SimSet() {
 		limit = 3;
-		range = 100;
+
+		spawnRange = 48;
+		despawnRange = 96;
 	};
 
 	%this.bosses = new SimSet() {
 		limit = 8;
-		range = -1;
+
+		spawnRange = 64;
+		despawnRange = -1;
 	};
 }
 
@@ -53,11 +61,20 @@ function ZAMB_Zombies::tick(%this) {
 			break;
 		}
 
-		if (%obj.getState() $= "Dead" || !%obj.hasSurvivorWithinRange(%obj.typeGroup.range)) {
+		if (%obj.getState() $= "Dead") {
 			%this.remove(%obj);
-			%this.index--;
+			%obj.typeGroup.remove(%obj);
 
+			MissionCleanup.add(%obj);
+		}
+		else if (!isSurvivorWithinRange(%obj.position, %obj.typeGroup.despawnRange)) {
+			%obj.delete();
+		}
+
+		if (!isObject(%obj) || !%this.isMember(%obj)) {
+			%this.index--;
 			%count--;
+
 			continue;
 		}
 
@@ -69,7 +86,7 @@ function ZAMB_Zombies::tick(%this) {
 	}
 }
 
-function ZAMB_Zombies::create(%this, %dataBlock, %transform) {
+function ZAMB_Zombies::spawn(%this, %dataBlock, %node) {
 	if (!isObject(%dataBlock) || !%dataBlock.isZombie) {
 		error("ERROR: Invalid zombie datablock!");
 		return -1;
@@ -80,14 +97,19 @@ function ZAMB_Zombies::create(%this, %dataBlock, %transform) {
 		case 1: %group = %this.hordes;
 		case 2: %group = %this.specials;
 		case 3: %group = %this.bosses;
+
+		default:
+			error("ERROR: Zombie datablock has an invalid zombieType attribute.");
+			return -1;
 	}
 
-	if (!isObject(%group)) {
-		error("ERROR: Zombie datablock has an invalid zombieType attribute.");
-		return -1;
+	if (%node $= "") {
+		if (isObject(NodeGroup)) {
+			%node = NodeGroup.findZombieSpawn(%group.spawnRange);
+		}
 	}
 
-	if (%group.getCount() >= %group.limit) {
+	if (!isObject(%node) || %group.getCount() >= %group.limit) {
 		return -1;
 	}
 
@@ -104,44 +126,21 @@ function ZAMB_Zombies::create(%this, %dataBlock, %transform) {
 	%this.add(%obj);
 	%group.add(%obj);
 
-	%obj.setTransform(%transform);
+	%obj.setTransform(%node.position);
 	return %obj;
 }
 
-function ZAMB_Zombies::spawn(%this, %dataBlock, %node) {
-	if (!isObject(%dataBlock) || !%dataBlock.isZombie) {
-		error("ERROR: Invalid zombie datablock!");
-		return -1;
-	}
-
-	if (%this.getCount() >= $ZAMB::ZombieLimit) {
-		return -1;
-	}
-
-	if (%node $= "") {
-		if (isObject(NodeGroup)) {
-			%node = NodeGroup.findZombieSpawn();
-		}
-	}
-
-	if (!isObject(%node)) {
-		return -1;
-	}
-
-	return %this.create(%dataBlock, %node.position);
+function NodeGroup::findZombieSpawn(%this, %range) {
+	return pickRandomItemFromList(%this.findAllZombieSpawns(%range));
 }
 
-function NodeGroup::findZombieSpawn(%this, %miniGame, %objectBox) {
-	return pickRandomItemFromList(%this.findAllZombieSpawns(%miniGame, %objectBox));
-}
-
-function NodeGroup::findAllZombieSpawns(%this, %miniGame, %objectBox) {
+function NodeGroup::findAllZombieSpawns(%this, %range) {
 	%count = %this.getCount();
 
 	for (%i = 0; %i < %count; %i++) {
 		%node = %this.getObject(%i);
 
-		if (%node.isValidZombieSpawn(%miniGame, %objectBox)) {
+		if (%node.isValidZombieSpawn(%range)) {
 			if (%spawns $= "") {
 				%spawns = %node;
 			}
@@ -154,47 +153,32 @@ function NodeGroup::findAllZombieSpawns(%this, %miniGame, %objectBox) {
 	return %spawns;
 }
 
-function NodeSO::isValidZombieSpawn(%this, %miniGame) {
-	if (isObject(%miniGame)) {
-		%min = 4;
-		%max = 16;
+function NodeSO::isValidZombieSpawn(%this, %range) {
+	for (%i = 0; %i < $defaultMiniGame.numMembers; %i++) {
+		%obj = $defaultMiniGame.member[%i].player;
 
-		for (%i = 0; %i < %miniGame.numMembers; %i++) {
-			%obj = %miniGame.member[%i].player;
+		if (isObject(%obj) && %obj.getState() !$= "Dead") {
+			%dist = vectorDist(%this.position, %obj.position);
 
-			if (isObject(%obj) && %obj.getState() !$= "Dead") {
-				%dist = vectorDist(%this.position, %obj.position);
-
-				if (%dist <= %min) {
-					return 0;
-				}
-
-				if (%lowest $= "" || %dist < %lowest) {
-					%lowest = %dist;
-				}
-
-				if (%dist > %max) {
-					continue;
-				}
-
-				%ray = containerRayCast(
-					%obj.getHackPosition(),
-					vectorAdd(%this.position, "0 0 0.1"),
-					$TypeMasks::FxBrickObjectType
-				);
-
-				if (%ray $= "0") {
-					return 0;
-				}
+			if (%dist > %range) {
+				continue;
 			}
-		}
 
-		if (%lowest $= "" || %lowest > %max) {
-			return 0;
+			%inRange = 1;
+
+			%ray = containerRayCast(
+				%obj.getHackPosition(),
+				vectorAdd(%this.position, "0 0 0.1"),
+				$TypeMasks::FxBrickObjectType
+			);
+
+			if (%ray $= "0") {
+				return 0;
+			}
 		}
 	}
 
-	return 1;
+	return %inRange ? 1 : 0;
 }
 
 function pickRandomItemFromList(%list) {
@@ -207,20 +191,20 @@ function pickRandomItemFromList(%list) {
 	return getWord(%list, getRandom(0, %count - 1));
 }
 
-function AIPlayer::hasSurvivorWithinRange(%this, %range) {
+function isSurvivorWithinRange(%point, %range) {
 	if (%range == -1) {
 		return 1;
 	}
 
-	initContainerRadiusSearch(%this.position, %range, $TypeMasks::PlayerObjectType);
+	initContainerRadiusSearch(%point, %range, $TypeMasks::PlayerObjectType);
 
 	while (isObject(%obj = containerSearchNext())) {
 		if (!%obj.getDataBlock().isSurvivor || %obj.getState() $= "Dead") {
 			continue;
 		}
 
-		if (vectorDist(%obj.position, %obj.range) >= %range) {
-			continue;
+		if (vectorDist(%point, %obj.position) <= %range) {
+			return 1;
 		}
 	}
 
